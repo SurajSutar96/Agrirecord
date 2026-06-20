@@ -66,7 +66,7 @@ const STATE_THEMES = [
   }
 ];
 
-export default function CardPreview({ data, forceFullScale = false, previewRef }) {
+export default function CardPreview({ data, forceFullScale = false, previewRef, isDraft = false }) {
   const containerRef = useRef(null);
   const [scale, setScale] = useState(1);
 
@@ -387,6 +387,19 @@ Issued: ${issueDate}`;
               <Shield className="w-8 h-8" style={{ color: theme.accentColor }} />
             </div>
           </div>
+
+          {isDraft && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[100] select-none overflow-hidden">
+              <div 
+                className="text-red-600/15 font-black text-6xl uppercase tracking-[0.25em] select-none pointer-events-none whitespace-nowrap rotate-[-30deg]"
+                style={{
+                  textShadow: "1px 1px 0 rgba(255,255,255,0.4)"
+                }}
+              >
+                AgriRecord Draft
+              </div>
+            </div>
+          )}
         </div>
 
         {/* BACK CARD */}
@@ -401,7 +414,7 @@ Issued: ${issueDate}`;
           {/* Header Row */}
           <div className="flex justify-between items-start mb-1 border-b pb-1.5 relative z-10" style={{ borderColor: theme.lightBorder, height: "55px", overflow: "hidden" }}>
             <div className="flex-1 pr-12">
-              <h3 className="font-black text-[11px] mb-0.5 uppercase tracking-widest" style={{ color: theme.primaryColor, lineHeight: "1.1" }}>
+              <h3 className="font-black text-[11px] mb-0.5 uppercase tracking-widest" style={{ color: theme.primaryColor, lineHeight: "1.4" }}>
                 Permanent Address / स्थायी पता
               </h3>
               <p className="text-[11px] text-slate-800 h2c-text-slate-800 leading-tight font-bold" style={{ lineHeight: "1.2", height: "26px", overflow: "hidden", display: "block" }}>{data.address}</p>
@@ -413,7 +426,7 @@ Issued: ${issueDate}`;
 
           {/* Land records block */}
           <div className="flex-1 overflow-hidden relative z-10 flex flex-col mt-2" style={{ height: "210px" }}>
-            <h3 className="font-black text-[11px] mb-1.5 uppercase tracking-widest flex items-center gap-2" style={{ color: theme.primaryColor, lineHeight: "1" }}>
+            <h3 className="font-black text-[11px] mb-1.5 uppercase tracking-widest flex items-center gap-2" style={{ color: theme.primaryColor, lineHeight: "1.4" }}>
               <Shield className="w-3.5 h-3.5 text-emerald-800 h2c-text-emerald-800" /> Land Records / भूमि का विवरण
             </h3>
             
@@ -424,12 +437,12 @@ Issued: ${issueDate}`;
                     className={`font-black border-b ${tableStyles.headerText}`}
                     style={{ backgroundColor: theme.lightBg, color: theme.primaryColor, borderColor: theme.lightBorder }}
                   >
-                    <th className={tableStyles.headerPadding} style={{ width: "18%" }}>District</th>
-                    <th className={tableStyles.headerPadding} style={{ width: "18%" }}>Sub-Dist</th>
+                    <th className={tableStyles.headerPadding} style={{ width: "17%" }}>District</th>
+                    <th className={tableStyles.headerPadding} style={{ width: "17%" }}>Sub-Dist</th>
                     <th className={tableStyles.headerPadding} style={{ width: "18%" }}>Village</th>
-                    <th className={tableStyles.headerPadding} style={{ width: "18%" }}>Khata</th>
-                    <th className={tableStyles.headerPadding} style={{ width: "16%" }}>Khasra</th>
-                    <th className={`${tableStyles.headerPadding} text-right`} style={{ width: "12%" }}>Area</th>
+                    <th className={tableStyles.headerPadding} style={{ width: "14%" }}>Khata</th>
+                    <th className={tableStyles.headerPadding} style={{ width: "14%" }}>Khasra</th>
+                    <th className={`${tableStyles.headerPadding} text-right`} style={{ width: "20%" }}>Area</th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${tableStyles.text}`} style={{ borderColor: theme.lightBorder }}>
@@ -483,6 +496,19 @@ Issued: ${issueDate}`;
               <Shield className="w-4 h-4" style={{ color: theme.primaryColor }} />
             </div>
           </div>
+
+          {isDraft && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[100] select-none overflow-hidden">
+              <div 
+                className="text-red-600/15 font-black text-6xl uppercase tracking-[0.25em] select-none pointer-events-none whitespace-nowrap rotate-[-30deg]"
+                style={{
+                  textShadow: "1px 1px 0 rgba(255,255,255,0.4)"
+                }}
+              >
+                AgriRecord Draft
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

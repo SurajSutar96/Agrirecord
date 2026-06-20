@@ -847,7 +847,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
             </div>
             
             {/* Live rendering */}
-            <CardPreview data={formData} previewRef={previewRef} />
+            <CardPreview data={formData} previewRef={previewRef} isDraft={true} />
           </div>
 
           {/* Document Operations Controls Panel */}

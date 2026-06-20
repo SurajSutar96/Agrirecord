@@ -428,6 +428,12 @@ def update_credits(data: schemas.UserUpdateCredits, token: str = Depends(get_tok
     user_doc = user_ref.get()
     if not user_doc.exists:
         raise HTTPException(status_code=404, detail="User not found")
+        
+    user_data = user_doc.to_dict()
+    target_email = (user_data.get("email") or "").lower()
+    if "surajsutar8154@gmail" in target_email or target_email == "admin@agrirecord.com" or user_data.get("mobile") == "0000000000":
+        raise HTTPException(status_code=400, detail="Cannot modify credits for super-administrator account")
+        
     user_ref.update({"freeCredits": data.credits})
     return {"success": True, "freeCredits": data.credits}
 
@@ -438,6 +444,12 @@ def update_role(data: schemas.UserUpdateRole, token: str = Depends(get_token)):
     user_doc = user_ref.get()
     if not user_doc.exists:
         raise HTTPException(status_code=404, detail="User not found")
+        
+    user_data = user_doc.to_dict()
+    target_email = (user_data.get("email") or "").lower()
+    if "surajsutar8154@gmail" in target_email or target_email == "admin@agrirecord.com" or user_data.get("mobile") == "0000000000":
+        raise HTTPException(status_code=400, detail="Cannot modify role for super-administrator account")
+        
     user_ref.update({"role": data.role})
     return {"success": True, "role": data.role}
 
@@ -545,8 +557,9 @@ def delete_user(user_id: str, token: str = Depends(get_token)):
         raise HTTPException(status_code=404, detail="User not found")
     
     user_data = user_doc.to_dict()
-    if user_data.get("mobile") == "0000000000":
-        raise HTTPException(status_code=400, detail="Cannot delete default system administrator account")
+    target_email = (user_data.get("email") or "").lower()
+    if "surajsutar8154@gmail" in target_email or target_email == "admin@agrirecord.com" or user_data.get("mobile") == "0000000000":
+        raise HTTPException(status_code=400, detail="Cannot delete super-administrator account")
         
     user_ref.delete()
     return {"success": True}
