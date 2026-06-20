@@ -4,7 +4,7 @@ import Header from "./components/Header";
 import MainGenerator from "./pages/MainGenerator";
 import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel";
-import { AboutModal, ContactModal, RechargeModal } from "./components/Modals";
+import { AboutModal, ContactModal, RechargeModal, ProfileModal } from "./components/Modals";
 import { Landmark, HelpCircle, Mail, ShieldAlert } from "lucide-react";
 import { auth, googleProvider, signInWithPopup } from "./firebase";
 
@@ -13,6 +13,7 @@ export default function App() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [rechargeOpen, setRechargeOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem("agri_record_token");
@@ -144,6 +145,7 @@ export default function App() {
           onLogout={handleLogout} 
           onOpenLogin={handleGoogleLogin} 
           onOpenRecharge={() => setRechargeOpen(true)}
+          onOpenProfile={() => setProfileOpen(true)}
         />
 
         {/* Dynamic Route Pages */}
@@ -216,6 +218,14 @@ export default function App() {
           onClose={() => setRechargeOpen(false)} 
           user={user} 
           onUpdateCredits={handleUpdateCredits}
+        />
+
+        {/* Profile Settings Modal */}
+        <ProfileModal
+          isOpen={profileOpen}
+          onClose={() => setProfileOpen(false)}
+          user={user}
+          onUpdateUser={(updatedUser) => setUser(updatedUser)}
         />
       </div>
     </Router>

@@ -10,6 +10,7 @@ export default function Dashboard({ user }) {
   const [selectedCard, setSelectedCard] = useState(null);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const previewRef = useRef(null);
+  const pdfRef = useRef(null);
 
   useEffect(() => {
     fetchCards();
@@ -93,24 +94,29 @@ export default function Dashboard({ user }) {
   };
 
   const handleDownload = async () => {
-    if (!selectedCard || !previewRef.current) return;
+    const cardContainer = pdfRef.current;
+    if (!selectedCard || !cardContainer) return;
     setGeneratingPdf(true);
 
     try {
-      const canvas = await html2canvas(previewRef.current, {
-        pixelRatio: 2,
+      // Use lower resolution on mobile to prevent memory issues
+      const isMobile = window.innerWidth < 768;
+      const pdfScale = isMobile ? 1.5 : 2;
+
+      // Wait for fonts to load completely to avoid fallback font scaling shifts
+      if (document.fonts) {
+        await document.fonts.ready;
+      }
+
+      const canvas = await html2canvas(cardContainer, {
+        pixelRatio: pdfScale,
         backgroundColor: "#ffffff",
-        scale: 2,
+        scale: pdfScale,
         useCORS: true,
         allowTaint: true,
         logging: false,
         onclone: (clonedDoc, clonedEl) => {
-          convertOklchInClone(previewRef.current, clonedEl);
-          clonedEl.style.transform = 'none';
-          clonedEl.style.transformOrigin = 'unset';
-          clonedEl.style.height = '800px';
-          clonedEl.style.marginBottom = '0px';
-          clonedEl.style.width = '600px';
+          convertOklchInClone(cardContainer, clonedEl);
         }
       });
       const imgData = canvas.toDataURL("image/png");
@@ -121,10 +127,14 @@ export default function Dashboard({ user }) {
       });
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const printWidth = pdfWidth - 30;
-      const printHeight = (canvas.height * printWidth) / canvas.width;
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      
+      const padding = 15;
+      const printWidth = pdfWidth - padding * 2;
+      const printHeight = (canvasHeight * printWidth) / canvasWidth;
 
-      pdf.addImage(imgData, "PNG", 15, 15, printWidth, printHeight);
+      pdf.addImage(imgData, "PNG", padding, 15, printWidth, printHeight);
       pdf.save(`FarmerCard_${selectedCard.farmerId || "Saved"}.pdf`);
     } catch (err) {
       console.error("PDF download failed:", err);
@@ -282,6 +292,15 @@ export default function Dashboard({ user }) {
       {selectedCard && (
         <div className="hidden print-only">
           <CardPreview data={selectedCard} forceFullScale={true} />
+        </div>
+      )}
+
+      {/* PDF Capture Only Card wrapper (never scaled, invisible, offscreen) */}
+      {selectedCard && (
+        <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
+          <div ref={pdfRef} style={{ width: "600px", height: "800px" }}>
+            <CardPreview data={selectedCard} forceFullScale={true} />
+          </div>
         </div>
       )}
     </div>

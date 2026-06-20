@@ -462,7 +462,6 @@ export default function AdminPanel({ user, onAuthSuccess }) {
                         <td className="px-6 py-4">
                           <div className="flex flex-col">
                             <span className="text-sm font-black text-slate-800">{u.name}</span>
-                            <span className="text-[10px] text-slate-400 mt-0.5">{u.id}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4">

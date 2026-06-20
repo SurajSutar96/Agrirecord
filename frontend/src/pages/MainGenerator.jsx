@@ -343,10 +343,14 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
         await document.fonts.ready;
       }
 
+      // Use lower resolution on mobile to prevent memory issues
+      const isMobile = window.innerWidth < 768;
+      const pdfScale = isMobile ? 1.5 : 2;
+
       const canvas = await html2canvas(cardContainer, {
-        pixelRatio: 2,
+        pixelRatio: pdfScale,
         backgroundColor: "#ffffff",
-        scale: 2,
+        scale: pdfScale,
         useCORS: true,
         allowTaint: true,
         logging: false,
@@ -407,30 +411,6 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
             Generate, preview, and download custom, printable Farmer ID Cards.
           </p>
         </div>
-        {!user && (
-          <div className="flex items-center gap-2">
-            <span className="p-2 sm:p-2.5 bg-amber-50 rounded-xl sm:rounded-2xl border border-amber-100 text-amber-800">
-              <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5" />
-            </span>
-            <div className="flex flex-col pr-2 sm:pr-4">
-              <span className="text-[10px] sm:text-xs font-black text-amber-950 uppercase leading-none mb-1">
-                Account Required
-              </span>
-              <span className="text-[10px] sm:text-[11px] text-slate-400 font-bold">
-                Sign in to save cards and print.
-              </span>
-            </div>
-            <button
-              onClick={() => {
-                const event = new CustomEvent("open_login_modal");
-                window.dispatchEvent(event);
-              }}
-              className="px-3 sm:px-4 py-2 sm:py-2.5 bg-[#064e3b] hover:bg-[#085a44] text-white font-black text-[10px] sm:text-xs uppercase tracking-wider rounded-xl transition-all shadow-md cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
-            >
-              <UserPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Sign In
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Grid Layout splits Form & Preview */}
@@ -458,24 +438,15 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
                   }
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  const event = new CustomEvent("open_login_modal");
-                  window.dispatchEvent(event);
-                }}
-                className={`cursor-pointer px-5 py-2.5 text-white text-xs font-black rounded-xl uppercase tracking-wider transition-all shadow-md flex items-center gap-1.5 ${
-                  !user
-                    ? "bg-[#064e3b] hover:bg-[#085a44]"
-                    : "bg-amber-700 hover:bg-amber-800"
-                }`}
-              >
-                {!user ? (
-                  <><UserPlus className="w-4 h-4" /> Sign In / लॉगिन करें</>
-                ) : (
-                  <><CreditCard className="w-4 h-4" /> Recharge Wallet / क्रेडिट खरीदें</>
-                )}
-              </button>
+              {user && (
+                <button
+                  type="button"
+                  onClick={onOpenRecharge}
+                  className="cursor-pointer px-5 py-2.5 text-white text-xs font-black rounded-xl uppercase tracking-wider transition-all shadow-md flex items-center gap-1.5 bg-amber-700 hover:bg-amber-800"
+                >
+                  <CreditCard className="w-4 h-4" /> Recharge Wallet / क्रेडिट खरीदें
+                </button>
+              )}
             </div>
           )}
           {/* Stepper Header */}

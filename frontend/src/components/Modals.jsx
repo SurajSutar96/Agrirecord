@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { CircleX, Mail, Key, Phone, User, Landmark, HelpCircle, CheckCircle, CreditCard, Lock, Check, Wallet } from "lucide-react";
+import { CircleX, Mail, Key, Phone, User, Landmark, HelpCircle, CheckCircle, CreditCard, Lock, Check, Wallet, Loader2 } from "lucide-react";
 import { auth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "../firebase";
 
 
@@ -841,6 +841,146 @@ export const RechargeModal = ({ isOpen, onClose, user, onUpdateCredits }) => {
             </button>
           </div>
         )}
+      </div>
+    </Modal>
+  );
+};
+
+export const ProfileModal = ({ isOpen, onClose, user, onUpdateUser }) => {
+  const [name, setName] = useState(user?.name || "");
+  const [mobile, setMobile] = useState(user?.mobile || "");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => {
+    if (user) {
+      setName(user.name || "");
+      setMobile(user.mobile || "");
+    }
+  }, [user]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setLoading(true);
+
+    try {
+      const token = localStorage.getItem("agri_record_token");
+      const response = await fetch(`/api/users/update-profile?token=${token}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, mobile: mobile.replace(/\D/g, "") })
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || "Failed to update profile");
+      }
+
+      localStorage.setItem("agri_record_user", JSON.stringify(data));
+      if (onUpdateUser) {
+        onUpdateUser(data);
+      }
+      setSuccess("Profile updated successfully!");
+      setTimeout(() => {
+        onClose();
+        setSuccess("");
+      }, 1500);
+    } catch (err) {
+      setError(err.message || "An error occurred while updating profile.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <div className="space-y-6">
+        <div className="flex items-center gap-3 border-b pb-4 border-emerald-100">
+          <div className="bg-emerald-100 p-2.5 rounded-2xl text-emerald-800">
+            <User className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-xl font-extrabold text-slate-800">
+              Profile Settings / प्रोफाइल सेटिंग्स
+            </h3>
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+              Update your account details
+            </p>
+          </div>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-100 text-red-600 rounded-xl p-3 text-xs font-bold">
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl p-3 text-xs font-bold">
+            {success}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
+              Full Name / आपका नाम
+            </label>
+            <input
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter Full Name"
+              className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-sm font-bold text-slate-700"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
+              Email Address / ईमेल (Read-Only)
+            </label>
+            <input
+              type="email"
+              disabled
+              value={user?.email || ""}
+              className="w-full px-4 py-3 border border-slate-100 bg-slate-50 text-slate-400 rounded-xl outline-none text-sm font-bold cursor-not-allowed"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
+              Mobile Number / मोबाइल नंबर
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">
+                +91
+              </span>
+              <input
+                type="tel"
+                maxLength={10}
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value.replace(/\D/g, ""))}
+                placeholder="10-Digit Mobile (Keep blank if none)"
+                className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-sm font-bold text-slate-700"
+              />
+            </div>
+            <p className="text-[10px] text-slate-400 font-bold mt-1">
+              Add your mobile number so that you can login using it later. Keep it blank if you want.
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 bg-[#064e3b] hover:bg-[#085a44] text-white text-sm font-black rounded-xl uppercase tracking-wider transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? "Saving Changes..." : "Save Changes / सुरक्षित करें"}
+          </button>
+        </form>
       </div>
     </Modal>
   );

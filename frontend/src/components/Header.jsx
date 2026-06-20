@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Wallet, LogIn, LogOut, UserCheck, Shield, Menu, X } from "lucide-react";
 
-export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge }) {
+export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge, onOpenProfile }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -79,10 +79,14 @@ export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge }) 
                 </div>
 
                 {/* Logged in User Profile Info */}
-                <div className="hidden sm:flex flex-col text-right leading-none gap-0.5 px-1">
-                  <span className="text-xs font-black text-slate-800">{user.name}</span>
-                  <span className="text-[8.5px] text-slate-400 font-extrabold uppercase tracking-wider">
-                    {user.role} Role
+                <div 
+                  onClick={onOpenProfile}
+                  className="hidden sm:flex flex-col text-right leading-none gap-0.5 px-1 cursor-pointer group"
+                  title="Click to view profile / edit mobile"
+                >
+                  <span className="text-xs font-black text-slate-800 group-hover:text-emerald-700 transition-colors">{user.name}</span>
+                  <span className="text-[8.5px] text-slate-400 font-extrabold uppercase tracking-wider group-hover:text-emerald-600 transition-colors">
+                    {user.role} {user.mobile ? `• ${user.mobile}` : "• Add Phone"}
                   </span>
                 </div>
 
@@ -137,6 +141,17 @@ export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge }) 
               >
                 My Cards / मेरे कार्ड
               </Link>
+            )}
+            {user && (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenProfile();
+                }}
+                className="text-xs uppercase tracking-wider font-extrabold px-4 py-2.5 rounded-xl text-left text-slate-500 hover:text-slate-700 cursor-pointer"
+              >
+                Profile / प्रोफाइल {user.mobile ? `(${user.mobile})` : "(Add Phone)"}
+              </button>
             )}
             {user && user.role === "Admin" && (
               <Link

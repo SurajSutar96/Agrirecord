@@ -128,17 +128,6 @@ def login(payload: Optional[UserSyncPayload] = None, token: str = Depends(get_to
             is_super_admin = True
             
     if not user_doc.exists:
-        # If mobile is empty (e.g. Google sign-in), generate a unique dummy mobile number starting with 99
-        if not sync_mobile:
-            import random
-            while True:
-                dummy_mobile = "99" + "".join(random.choices("0123456789", k=8))
-                # Check if this dummy mobile is already in the database
-                existing_mobile_query = db.collection("users").where("mobile", "==", dummy_mobile).limit(1).get()
-                if len(existing_mobile_query) == 0:
-                    sync_mobile = dummy_mobile
-                    break
-
         role = "Admin" if is_super_admin else "User"
         credits = 100000 if is_super_admin else 0
         
@@ -201,6 +190,41 @@ def get_me(token: str = Depends(get_token)):
     if not user_doc.exists:
         raise HTTPException(status_code=404, detail="User not found")
     user_data = user_doc.to_dict()
+    user_data["createdAt"] = ensure_datetime(user_data.get("createdAt"))
+    return user_data
+
+@app.post("/api/users/update-profile", response_model=schemas.UserResponse)
+def update_profile(payload: UserSyncPayload, token: str = Depends(get_token)):
+    user_id = get_current_user_id(token)
+    user_ref = db.collection("users").document(user_id)
+    user_doc = user_ref.get()
+    if not user_doc.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    user_data = user_doc.to_dict()
+    updates = {}
+    
+    if payload.name:
+        updates["name"] = payload.name
+        
+    if payload.mobile is not None:
+        clean_mobile = "".join(filter(str.isdigit, payload.mobile))[-10:] if payload.mobile else ""
+        if clean_mobile:
+            if len(clean_mobile) < 10:
+                raise HTTPException(status_code=400, detail="Invalid mobile number (must be 10 digits)")
+            # Check uniqueness
+            existing_users = db.collection("users").where("mobile", "==", clean_mobile).limit(1).get()
+            for doc in existing_users:
+                if doc.id != user_id:
+                    raise HTTPException(status_code=400, detail="Mobile number already registered by another user")
+            updates["mobile"] = clean_mobile
+        else:
+            updates["mobile"] = ""
+            
+    if updates:
+        user_ref.update(updates)
+        user_data.update(updates)
+        
     user_data["createdAt"] = ensure_datetime(user_data.get("createdAt"))
     return user_data
 
