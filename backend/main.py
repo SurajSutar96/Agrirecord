@@ -17,7 +17,13 @@ from firebase_admin import credentials, auth, firestore
 
 if not firebase_admin._apps:
     try:
-        cred = credentials.Certificate(os.path.join(os.path.dirname(__file__), "serviceAccountKey.json"))
+        # Check multiple paths for serviceAccountKey.json
+        # 1. Same directory as main.py (local development: backend/serviceAccountKey.json)
+        key_path = os.path.join(os.path.dirname(__file__), "serviceAccountKey.json")
+        if not os.path.exists(key_path):
+            # 2. Project root (Render Secret File: serviceAccountKey.json)
+            key_path = os.path.join(os.path.dirname(__file__), "..", "serviceAccountKey.json")
+        cred = credentials.Certificate(key_path)
         firebase_admin.initialize_app(cred)
     except Exception as e:
         print(f"Firebase Admin SDK initialization failed: {e}")
