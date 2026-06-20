@@ -1,0 +1,207 @@
+@import "tailwindcss";
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans Devanagari", sans-serif;
+  background-color: #f3f7f5;
+  background-image: radial-gradient(circle at 10% 20%, rgba(6, 78, 59, 0.04) 0%, rgba(243, 247, 245, 1) 90%);
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Devanagari", sans-serif;
+}
+
+.premium-card {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 10px 30px -15px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.01);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-card:hover {
+  box-shadow: 0 20px 40px -15px rgba(6, 78, 59, 0.08), 0 1px 4px rgba(0, 0, 0, 0.02);
+  border-color: rgba(6, 78, 59, 0.15);
+}
+
+.glass-widget {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px rgba(6, 78, 59, 0.03);
+}
+
+.hover-scale {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-scale:hover {
+  transform: translateY(-2px) scale(1.008);
+}
+
+.hover-lift {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+}
+
+.card-ratio {
+  width: 600px; 
+  height: 380px;
+  flex-shrink: 0;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.card-pattern {
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='%23064e3b' fill-opacity='0.03'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Transitions for dynamic scaling resizing */
+.card-container-transition {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), margin-bottom 0.2s ease-in-out;
+}
+
+@media print {
+  @page {
+    margin: 0.5cm;
+    size: A4 portrait;
+  }
+  
+  /* Forces browser to print backgrounds */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+
+  body {
+    background-color: white !important;
+    margin: 0;
+    padding: 0;
+    overflow: visible !important;
+  }
+  
+  #root {
+    overflow: visible !important;
+  }
+
+  /* Centering card on browser prints */
+  .card-preview-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 20px !important;
+    width: 100% !important;
+  }
+
+  .print-force-scale {
+    transform: scale(1) !important;
+    height: auto !important;
+    width: 600px !important;
+    margin: 0 auto 30px auto !important;
+    page-break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+    display: block !important;
+  }
+}
+
+/* html2canvas color support - overrides oklch for card preview exports */
+.h2c-bg-white {
+  background-color: #ffffff !important;
+}
+.h2c-bg-gray-50 {
+  background-color: #f9fafb !important;
+}
+.h2c-bg-white-50 {
+  background-color: rgba(255, 255, 255, 0.5) !important;
+}
+.h2c-border-slate-200 {
+  border-color: #e2e8f0 !important;
+}
+.h2c-border-gray-100 {
+  border-color: #f3f4f6 !important;
+}
+.h2c-text-slate-900 {
+  color: #0f172a !important;
+}
+.h2c-text-slate-800 {
+  color: #1e293b !important;
+}
+.h2c-text-slate-650 {
+  color: #334155 !important;
+}
+.h2c-text-slate-600 {
+  color: #475569 !important;
+}
+.h2c-text-slate-500 {
+  color: #64748b !important;
+}
+.h2c-text-slate-400 {
+  color: #94a3b8 !important;
+}
+.h2c-text-slate-300 {
+  color: #cbd5e1 !important;
+}
+.h2c-text-white {
+  color: #ffffff !important;
+}
+.h2c-text-white-70 {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+.h2c-text-gray-300 {
+  color: #d1d5db !important;
+}
+.h2c-text-emerald-700 {
+  color: #047857 !important;
+}
+.h2c-text-emerald-800 {
+  color: #065f46 !important;
+}
+.h2c-text-emerald-950-70 {
+  color: rgba(2, 45, 34, 0.7) !important;
+}
+
+/* ====== Screenshot & Screen Capture Protection ====== */
+
+/* Prevent text selection globally on sensitive areas */
+.no-select {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+/* Disable drag on images */
+.no-select img {
+  -webkit-user-drag: none !important;
+  user-drag: none !important;
+  pointer-events: none;
+}
+
+/* Right-click context menu warning style */
+.screen-protected {
+  -webkit-touch-callout: none;
+}
+
+/* Blur protection when window loses focus */
+.blurred-content {
+  filter: blur(12px) !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  transition: filter 0.15s ease;
+}
+
+

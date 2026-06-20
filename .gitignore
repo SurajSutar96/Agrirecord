@@ -1,0 +1,40 @@
+# Virtual Environment
+.venv/
+venv/
+env/
+ENV/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Firebase & Secret Credentials
+backend/serviceAccountKey.json
+.env
+.env.local
+.env.*.local
+
+# Node & Frontend Build
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+.eslintcache
+
+# Project Uploads (Farmer uploaded photo assets)
+uploads/
+backend/uploads/
+
+# Databases (SQLite remnants)
+*.db
+*.db-journal
+*.sqlite3
+
+# IDE / System files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
