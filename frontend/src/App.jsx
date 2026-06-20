@@ -89,7 +89,7 @@ export default function App() {
     return () => window.removeEventListener("open_login_modal", openLoginListener);
   }, []);
 
-  // Screenshot & screen capture protection
+  // Screenshot & screen capture protection (desktop only, no blur)
   useEffect(() => {
     // Block right-click context menu
     const handleContextMenu = (e) => {
@@ -103,7 +103,6 @@ export default function App() {
       if (e.key === "PrintScreen") {
         e.preventDefault();
         navigator.clipboard.writeText("").catch(() => {});
-        alert("📸 Screenshots are disabled for security purposes.");
         return false;
       }
       // Ctrl+Shift+S (Windows Snipping), Ctrl+Shift+I (DevTools), F12
@@ -118,25 +117,12 @@ export default function App() {
       }
     };
 
-    // Blur window when losing focus (prevents screenshots/snips)
-    const handleBlur = () => {
-      document.body.classList.add("blurred-content");
-    };
-
-    const handleFocus = () => {
-      document.body.classList.remove("blurred-content");
-    };
-
     document.addEventListener("contextmenu", handleContextMenu);
     document.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("blur", handleBlur);
-    window.addEventListener("focus", handleFocus);
 
     return () => {
       document.removeEventListener("contextmenu", handleContextMenu);
       document.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("blur", handleBlur);
-      window.removeEventListener("focus", handleFocus);
     };
   }, []);
 

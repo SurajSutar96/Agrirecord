@@ -13,19 +13,19 @@ export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge }) 
   };
 
   return (
-    <header className="sticky top-4 z-50 mx-auto my-4 w-full max-w-7xl px-4 sm:px-6 lg:px-8 no-print">
-      <div className="glass-widget rounded-3xl px-6 py-1.5 shadow-lg border border-emerald-100/50">
-        <div className="flex justify-between items-center h-14">
+    <header className="sticky top-2 sm:top-4 z-50 mx-auto my-2 sm:my-4 w-full max-w-7xl px-2 sm:px-6 lg:px-8 no-print">
+      <div className="glass-widget rounded-2xl sm:rounded-3xl px-3 sm:px-6 py-1.5 shadow-lg border border-emerald-100/50">
+        <div className="flex justify-between items-center h-12 sm:h-14">
           {/* Logo */}
           <div className="flex items-center cursor-pointer hover:opacity-90 transition-opacity" onClick={() => navigate("/")}>
-            <div className="bg-[#064e3b] p-2 rounded-xl mr-3 shadow-inner hover-scale">
-              <Landmark className="w-5.5 h-5.5 text-[#cddc39]" />
+            <div className="bg-[#064e3b] p-1.5 sm:p-2 rounded-lg sm:rounded-xl mr-2 sm:mr-3 shadow-inner hover-scale">
+              <Landmark className="w-4 h-4 sm:w-5.5 sm:h-5.5 text-[#cddc39]" />
             </div>
             <div className="flex flex-col">
-              <h1 className="text-xl font-black italic leading-none tracking-tight text-slate-800">
+              <h1 className="text-base sm:text-xl font-black italic leading-none tracking-tight text-slate-800">
                 Agri<span className="text-[#8bc34a]">record</span><span className="text-xs align-super ml-0.5 text-emerald-800 font-bold">Pro</span>
               </h1>
-              <span className="text-[7.5px] uppercase font-bold tracking-[0.2em] text-slate-400 mt-1">
+              <span className="hidden sm:block text-[7.5px] uppercase font-bold tracking-[0.2em] text-slate-400 mt-1">
                 Farmer Identity Portal
               </span>
             </div>
@@ -71,10 +71,11 @@ export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge }) 
                 <div 
                   onClick={onOpenRecharge}
                   title="Click to recharge wallet credits"
-                  className="bg-emerald-800/10 border border-emerald-800/20 rounded-2xl px-3.5 py-2 flex items-center gap-1.5 text-emerald-950 font-extrabold text-xs shadow-xs hover-scale cursor-pointer hover:bg-emerald-800/20 transition-all"
+                  className="bg-emerald-800/10 border border-emerald-800/20 rounded-xl sm:rounded-2xl px-2 sm:px-3.5 py-1.5 sm:py-2 flex items-center gap-1 sm:gap-1.5 text-emerald-950 font-extrabold text-[10px] sm:text-xs shadow-xs hover-scale cursor-pointer hover:bg-emerald-800/20 transition-all"
                 >
-                  <Wallet className="w-4 h-4 text-emerald-700" />
-                  <span>Wallet: {user.role === "Admin" ? "Unlimited" : `${user.freeCredits} Cr`}</span>
+                  <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-700" />
+                  <span className="hidden sm:inline">Wallet: {user.role === "Admin" ? "Unlimited" : `${user.freeCredits} Cr`}</span>
+                  <span className="sm:hidden">{user.role === "Admin" ? "∞" : user.freeCredits}</span>
                 </div>
 
                 {/* Logged in User Profile Info */}
@@ -88,19 +89,19 @@ export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge }) 
                 {/* Logout Button */}
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-1.5 px-3 py-2 border border-slate-200 rounded-2xl hover:bg-red-50 hover:text-red-600 text-slate-600 font-bold text-xs transition-all cursor-pointer hover:border-red-100"
+                  className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 border border-slate-200 rounded-xl sm:rounded-2xl hover:bg-red-50 hover:text-red-600 text-slate-600 font-bold text-xs transition-all cursor-pointer hover:border-red-100"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Logout</span>
                 </button>
               </>
             ) : (
               <button
                 onClick={onOpenLogin}
-                className="flex items-center gap-1.5 px-5 py-2.5 bg-[#064e3b] hover:bg-[#085a44] text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all shadow-md hover-scale cursor-pointer"
+                className="flex items-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 bg-[#064e3b] hover:bg-[#085a44] text-white font-black text-[10px] sm:text-xs uppercase tracking-wider sm:tracking-widest rounded-xl sm:rounded-2xl transition-all shadow-md hover-scale cursor-pointer"
               >
-                <LogIn className="w-4 h-4" />
-                <span>Login / Signup</span>
+                <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span>Sign In</span>
               </button>
             )}
 
