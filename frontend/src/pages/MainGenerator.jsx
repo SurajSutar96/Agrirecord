@@ -139,36 +139,47 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
     }));
   };
 
-  // Local File Upload parsing
-  const handlePhotoUpload = async (e) => {
+  // Local File Upload parsing with client-side compression to avoid Render's ephemeral disk wipes
+  const handlePhotoUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Show local preview base64 immediately
     const reader = new FileReader();
     reader.onload = (event) => {
-      setFormData(prev => ({ ...prev, photoUrl: event.target.result }));
+      const img = new Image();
+      img.onload = () => {
+        // Constrain photo size for card display (120px x 150px layout area)
+        // Max bounds of 250x300 keeps size below 20KB while preserving crisp rendering resolution
+        const maxWidth = 250;
+        const maxHeight = 300;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Compress to high-efficiency Jpeg at 75% quality
+        const compressedBase64 = canvas.toDataURL("image/jpeg", 0.75);
+        setFormData(prev => ({ ...prev, photoUrl: compressedBase64 }));
+      };
+      img.src = event.target.result;
     };
     reader.readAsDataURL(file);
-
-    // Also upload to server in background if token exists
-    const token = localStorage.getItem("agri_record_token");
-    if (token) {
-      const uploadData = new FormData();
-      uploadData.append("file", file);
-      try {
-        const response = await fetch("/api/upload-photo", {
-          method: "POST",
-          body: uploadData
-        });
-        const res = await response.json();
-        if (response.ok) {
-          setFormData(prev => ({ ...prev, photoUrl: res.photoUrl }));
-        }
-      } catch (err) {
-        console.error("Photo upload failed:", err);
-      }
-    }
   };
 
   // Checkout and wallet validation logic
