@@ -110,11 +110,13 @@ h1, h2, h3, h4, .font-display {
     transform: scale(1) !important;
     height: auto !important;
     width: 600px !important;
-    margin: 0 auto 30px auto !important;
+    margin: 0 auto !important;
     page-break-inside: avoid;
     box-shadow: none !important;
-    border: 1px solid #e2e8f0 !important;
-    display: block !important;
+    border: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 30px !important;
   }
 }
 
