@@ -358,17 +358,42 @@ def verify_cashfree_order(verify_data: schemas.OrderVerify):
     order_doc = order_ref.get()
     
     if res["success"]:
+        credits_to_add = 0
         if order_doc.exists:
             order_ref.update({"status": "PAID"})
+            order_data = order_doc.to_dict()
+            package_id = order_data.get("package_id")
+            
+            # Direct package to credits mapping in the backend
+            package_credits_map = {
+                "pkg_1_credit": 1,
+                "pkg_10_credits": 10,
+                "pkg_50_credits": 50
+            }
+            credits_to_add = package_credits_map.get(package_id, 0)
+            
+            # Amount-based fallback check if package map fails
+            if credits_to_add == 0:
+                amount = order_data.get("amount", 0)
+                if amount == 15:
+                    credits_to_add = 1
+                elif amount == 100:
+                    credits_to_add = 10
+                elif amount == 400:
+                    credits_to_add = 50
         
+        # Fallback to payload parameter only if order wasn't found in database (safety fallback)
+        if credits_to_add == 0:
+            credits_to_add = verify_data.creditsToAdd
+            
         user_ref = db.collection("users").document(verify_data.customerId)
         user_doc = user_ref.get()
         if user_doc.exists:
             user_data = user_doc.to_dict()
             current_credits = user_data.get("freeCredits", 0)
-            user_ref.update({"freeCredits": current_credits + verify_data.creditsToAdd})
+            user_ref.update({"freeCredits": current_credits + credits_to_add})
             
-        return {"success": True, "order_status": "PAID", "credits": verify_data.creditsToAdd}
+        return {"success": True, "order_status": "PAID", "credits": credits_to_add}
     else:
         if order_doc.exists:
             order_ref.update({"status": "FAILED"})
