@@ -412,12 +412,12 @@ Issued: ${issueDate}`;
           <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: theme.secondaryColor }}></div>
 
           {/* Header Row */}
-          <div className="flex justify-between items-start mb-1 border-b pb-1.5 relative z-10" style={{ borderColor: theme.lightBorder, height: "55px", overflow: "hidden" }}>
+          <div className="flex justify-between items-start mb-1 border-b pb-1.5 relative z-10" style={{ borderColor: theme.lightBorder, height: "60px", overflow: "hidden" }}>
             <div className="flex-1 pr-12">
               <h3 className="font-black text-[11px] mb-0.5 uppercase tracking-widest" style={{ color: theme.primaryColor, lineHeight: "1.4" }}>
                 Permanent Address / स्थायी पता
               </h3>
-              <p className="text-[11px] text-slate-800 h2c-text-slate-800 leading-tight font-bold" style={{ lineHeight: "1.2", height: "26px", overflow: "hidden", display: "block" }}>{data.address}</p>
+              <p className="text-[11px] text-slate-800 h2c-text-slate-800 font-bold" style={{ lineHeight: "1.35", height: "30px", overflow: "hidden", display: "block" }}>{data.address}</p>
             </div>
             <div className="flex flex-col items-end">
               <img src={stateTheme.logoUrl} className="w-10 h-10 opacity-20 grayscale" alt="seal" style={{ marginTop: "-2px" }} />
@@ -484,10 +484,10 @@ Issued: ${issueDate}`;
                   Issued On: {issueDate}
                 </span>
               </div>
-              <span className="text-[8px] text-slate-500 h2c-text-slate-500 font-bold uppercase block" style={{ lineHeight: "1.2" }}>
+              <span className="text-[8px] text-slate-500 h2c-text-slate-500 font-bold uppercase block" style={{ lineHeight: "1.35" }}>
                 PRIVATE DOCUMENT - NOT A GOVERNMENT IDENTITY CARD
               </span>
-              <span className="text-[7.5px] text-slate-500 h2c-text-slate-500 font-medium uppercase italic block" style={{ lineHeight: "1.2" }}>
+              <span className="text-[7.5px] text-slate-500 h2c-text-slate-500 font-medium uppercase italic block" style={{ lineHeight: "1.35" }}>
                 निजी दस्तावेज़ - यह कोई सरकारी पहचान पत्र नहीं है।
               </span>
             </div>
