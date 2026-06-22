@@ -230,7 +230,7 @@ Issued: ${issueDate}`;
         }}
       >
         {/* FRONT CARD */}
-        <div className="card-ratio bg-white h2c-bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-3xl overflow-hidden border border-slate-200 h2c-border-slate-200 relative card-pattern select-none" style={{ width: "600px", height: "380px", boxSizing: "border-box" }}>
+        <div className="card-ratio bg-white h2c-bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-none overflow-hidden border border-slate-200 h2c-border-slate-200 relative card-pattern select-none" style={{ width: "600px", height: "380px", boxSizing: "border-box" }}>
           {/* Watermark Logo */}
           <div className="absolute inset-0 flex items-center justify-center opacity-[0.08] pointer-events-none z-0">
             <img src={watermarkUrl} alt="Watermark" className="w-[360px] h-[360px] object-contain grayscale" />
@@ -403,7 +403,7 @@ Issued: ${issueDate}`;
         </div>
 
         {/* BACK CARD */}
-        <div className="card-ratio bg-white h2c-bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-3xl overflow-hidden border border-slate-200 h2c-border-slate-200 p-5 flex flex-col relative card-pattern select-none" style={{ width: "600px", height: "380px", boxSizing: "border-box" }}>
+        <div className="card-ratio bg-white h2c-bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-none overflow-hidden border border-slate-200 h2c-border-slate-200 p-5 flex flex-col relative card-pattern select-none" style={{ width: "600px", height: "380px", boxSizing: "border-box" }}>
           {/* Watermark Logo */}
           <div className="absolute inset-0 flex items-center justify-center opacity-[0.08] pointer-events-none z-0">
             <img src={watermarkUrl} alt="Watermark" className="w-[360px] h-[360px] object-contain grayscale" />
