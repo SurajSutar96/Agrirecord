@@ -146,7 +146,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const img = new Image();
+      const img = new window.Image();
       img.onload = () => {
         // Constrain photo size for card display (120px x 150px layout area)
         // Max bounds of 250x300 keeps size below 20KB while preserving crisp rendering resolution

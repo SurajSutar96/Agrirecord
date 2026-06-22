@@ -178,7 +178,7 @@ export default function App() {
           <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-bold text-slate-400 uppercase tracking-wider">
             <div className="flex items-center gap-2">
               <Landmark className="w-4 h-4 text-emerald-800" />
-              <span>&copy; {new Date().getFullYear()} AgriRecordPro. All Rights Reserved.</span>
+              <span>&copy; {new Date().getFullYear()} AgriRecordPro. All Rights Reserved by SURAJ SUTAR.</span>
             </div>
             
             <div className="flex gap-6">

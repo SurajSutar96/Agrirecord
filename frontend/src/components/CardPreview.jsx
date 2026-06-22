@@ -232,8 +232,8 @@ Issued: ${issueDate}`;
         {/* FRONT CARD */}
         <div className="card-ratio bg-white h2c-bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-3xl overflow-hidden border border-slate-200 h2c-border-slate-200 relative card-pattern select-none" style={{ width: "600px", height: "380px", boxSizing: "border-box" }}>
           {/* Watermark Logo */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-[0.04] pointer-events-none z-0">
-            <img src={watermarkUrl} alt="Watermark" className="w-[300px] h-[300px] object-contain grayscale" />
+          <div className="absolute inset-0 flex items-center justify-center opacity-[0.08] pointer-events-none z-0">
+            <img src={watermarkUrl} alt="Watermark" className="w-[360px] h-[360px] object-contain grayscale" />
           </div>
 
           {/* Top Line accent */}
@@ -391,7 +391,7 @@ Issued: ${issueDate}`;
           {isDraft && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[100] select-none overflow-hidden">
               <div 
-                className="text-red-600/15 font-black text-6xl uppercase tracking-[0.25em] select-none pointer-events-none whitespace-nowrap rotate-[-30deg]"
+                className="text-red-600/30 font-black text-7xl uppercase tracking-[0.25em] select-none pointer-events-none whitespace-nowrap rotate-[-30deg]"
                 style={{
                   textShadow: "1px 1px 0 rgba(255,255,255,0.4)"
                 }}
@@ -405,8 +405,8 @@ Issued: ${issueDate}`;
         {/* BACK CARD */}
         <div className="card-ratio bg-white h2c-bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-3xl overflow-hidden border border-slate-200 h2c-border-slate-200 p-5 flex flex-col relative card-pattern select-none" style={{ width: "600px", height: "380px", boxSizing: "border-box" }}>
           {/* Watermark Logo */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-[0.04] pointer-events-none z-0">
-            <img src={watermarkUrl} alt="Watermark" className="w-[300px] h-[300px] object-contain grayscale" />
+          <div className="absolute inset-0 flex items-center justify-center opacity-[0.08] pointer-events-none z-0">
+            <img src={watermarkUrl} alt="Watermark" className="w-[360px] h-[360px] object-contain grayscale" />
           </div>
 
           <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: theme.secondaryColor }}></div>
@@ -500,7 +500,7 @@ Issued: ${issueDate}`;
           {isDraft && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[100] select-none overflow-hidden">
               <div 
-                className="text-red-600/15 font-black text-6xl uppercase tracking-[0.25em] select-none pointer-events-none whitespace-nowrap rotate-[-30deg]"
+                className="text-red-600/30 font-black text-7xl uppercase tracking-[0.25em] select-none pointer-events-none whitespace-nowrap rotate-[-30deg]"
                 style={{
                   textShadow: "1px 1px 0 rgba(255,255,255,0.4)"
                 }}
