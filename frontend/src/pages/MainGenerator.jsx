@@ -45,20 +45,20 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
   
   // Basic Info Form State
   const [formData, setFormData] = useState({
-    nameHindi: "विवेक कुमार",
-    nameEnglish: "VIVEK KUMAR",
+    nameHindi: "आदित्य जगताप",
+    nameEnglish: "ADITYA JAGTAP",
     dob: "15/08/1990",
     gender: "Male",
     mobile: "9988776655",
     aadhaar: "123456789012",
     farmerId: "",
-    address: "ग्राम - रामपुर, पोस्ट - रामपुर, सुपौल, बिहार - 852131",
+    address: "Village: Kawali, Post: Devtala, Taluka: Ausa, Dist: Latur, 413520",
     photoUrl: "",
     downloadDate: "",
-    state: "Bihar",
+    state: "Maharashtra",
     cardColor: "default",
     landDetails: [
-      { id: "1", district: "Supaul", subDistrict: "Supaul", village: "Rampur", mOwnerNo: "452", khasra: "1256", area: "0.45 Hec" }
+      { id: "1", district: "Latur", subDistrict: "Ausa", village: "Kawali", mOwnerNo: "452", khasra: "1256", area: "0.45 Hec" }
     ]
   });
 
@@ -517,9 +517,9 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
                     onChange={handleStateChange}
                     className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-sm font-bold text-slate-700 bg-white"
                   >
+                    <option value="Maharashtra">Maharashtra / महाराष्ट्र</option>
                     <option value="Bihar">Bihar / बिहार</option>
                     <option value="Uttar Pradesh">Uttar Pradesh / उत्तर प्रदेश</option>
-                    <option value="Maharashtra">Maharashtra / महाराष्ट्र</option>
                     <option value="Rajasthan">Rajasthan / राजस्थान</option>
                   </select>
                 </div>
@@ -578,7 +578,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
                     name="nameHindi"
                     value={formData.nameHindi}
                     onChange={handleInputChange}
-                    placeholder="उदा: विवेक कुमार"
+                    placeholder="उदा: आदित्य जगताप"
                     className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-sm font-bold text-slate-700"
                   />
                 </div>
@@ -592,7 +592,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
                     name="nameEnglish"
                     value={formData.nameEnglish}
                     onChange={handleInputChange}
-                    placeholder="Ex: VIVEK KUMAR"
+                    placeholder="Ex: ADITYA JAGTAP"
                     className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-sm font-bold text-slate-700 uppercase"
                   />
                 </div>
