@@ -4,8 +4,9 @@ import Header from "./components/Header";
 import MainGenerator from "./pages/MainGenerator";
 import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel";
+import PolicyPage from "./pages/PolicyPage";
 import { AboutModal, ContactModal, RechargeModal, ProfileModal } from "./components/Modals";
-import { Landmark, HelpCircle, Mail, ShieldAlert } from "lucide-react";
+import { Landmark, HelpCircle, Mail, ShieldAlert, FileText, Truck, RotateCcw, CreditCard } from "lucide-react";
 import { auth, googleProvider, signInWithPopup } from "./firebase";
 
 export default function App() {
@@ -170,6 +171,7 @@ export default function App() {
               path="/admin" 
               element={<AdminPanel user={user} onAuthSuccess={handleAuthSuccess} />} 
             />
+            <Route path="/:policyType" element={<PolicyPage />} />
           </Routes>
         </div>
 
@@ -181,7 +183,24 @@ export default function App() {
               <span>&copy; {new Date().getFullYear()} AgriRecordPro. All Rights Reserved by SURAJ SUTAR.</span>
             </div>
             
-            <div className="flex gap-6">
+            <div className="flex flex-wrap gap-x-6 gap-y-2 justify-center md:justify-end">
+              <Link to="/terms" className="hover:text-slate-600 transition-colors flex items-center gap-1">
+                <FileText className="w-4 h-4" /> Terms & Conditions
+              </Link>
+              <Link to="/privacy-policy" className="hover:text-slate-600 transition-colors flex items-center gap-1">
+                <ShieldAlert className="w-4 h-4" /> Privacy Policy
+              </Link>
+              <Link to="/refund-policy" className="hover:text-slate-600 transition-colors flex items-center gap-1">
+                <CreditCard className="w-4 h-4" /> Refund & Cancellation
+              </Link>
+              <Link to="/return-policy" className="hover:text-slate-600 transition-colors flex items-center gap-1">
+                <RotateCcw className="w-4 h-4" /> Return Policy
+              </Link>
+              <Link to="/shipping-policy" className="hover:text-slate-600 transition-colors flex items-center gap-1">
+                <Truck className="w-4 h-4" /> Shipping Policy
+              </Link>
+            </div>
+            <div className="flex gap-6 justify-center md:justify-end">
               <button 
                 onClick={() => setAboutOpen(true)}
                 className="hover:text-slate-600 transition-colors flex items-center gap-1 cursor-pointer"
@@ -227,6 +246,8 @@ export default function App() {
           user={user}
           onUpdateUser={(updatedUser) => setUser(updatedUser)}
         />
+
+
       </div>
     </Router>
   );
