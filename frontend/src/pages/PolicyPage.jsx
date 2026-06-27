@@ -1,8 +1,25 @@
 import React from "react";
 import { useParams, Link } from "react-router-dom";
-import { FileText, ShieldAlert, CreditCard, RotateCcw, Truck, ArrowLeft, ChevronRight } from "lucide-react";
+import { 
+  FileText, ShieldAlert, CreditCard, RotateCcw, Truck, 
+  ArrowLeft, ChevronRight, HelpCircle, Mail 
+} from "lucide-react";
 
 const POLICIES = {
+  "about-us": {
+    id: "about-us",
+    title: "About Us",
+    titleHindi: "हमारे बारे में",
+    icon: HelpCircle,
+    path: "/about-us",
+  },
+  "contact-us": {
+    id: "contact-us",
+    title: "Contact Us",
+    titleHindi: "संपर्क करें",
+    icon: Mail,
+    path: "/contact-us",
+  },
   terms: {
     id: "terms",
     title: "Terms & Conditions",
@@ -42,6 +59,91 @@ const POLICIES = {
 
 const POLICY_LIST = Object.values(POLICIES);
 
+function AboutContent() {
+  return (
+    <div className="space-y-5 text-slate-600 text-sm leading-relaxed font-medium">
+      <p>
+        <strong>AgriRecordPro</strong> is a digital formatting utility portal owned and operated by{" "}
+        <strong>SURAJ SUTAR</strong>. Our primary objective is to assist Indian farmers in formatting, 
+        organizing, and digitizing their land records and identity cards into clean, printable pocket formats.
+      </p>
+      <p>
+        We understand the difficulties farmers face in carrying bulky, vulnerable paper land documents 
+        and official details. Our portal provides a simplified tool to enter these records and generate 
+        high-fidelity, portable identity formats complete with a verification QR code.
+      </p>
+      <p className="border-l-4 border-emerald-500 pl-4 bg-emerald-50/50 py-3 rounded-r-xl text-emerald-950 italic">
+        "हमारा लक्ष्य प्रत्येक भारतीय किसान को उनकी भूमि के रिकॉर्ड और पहचान पत्र को एक आधुनिक, सुरक्षित और ले जाने में आसान डिजिटल प्रारूप में व्यवस्थित करने में सहायता करना है।"
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+        <div className="p-4 border border-slate-100 rounded-2xl bg-white shadow-xs space-y-2">
+          <h4 className="font-extrabold text-[#064e3b] text-sm uppercase tracking-wide">
+            Our Vision / हमारा विजन
+          </h4>
+          <p className="text-xs text-slate-500 font-bold leading-relaxed">
+            To bridge the gap between traditional paperwork and modern digital tools for rural India, 
+            ensuring every farmer has secure, ready access to their credentials on their mobile devices.
+          </p>
+        </div>
+        <div className="p-4 border border-slate-100 rounded-2xl bg-white shadow-xs space-y-2">
+          <h4 className="font-extrabold text-[#064e3b] text-sm uppercase tracking-wide">
+            Compliance / अनुपालन
+          </h4>
+          <p className="text-xs text-slate-500 font-bold leading-relaxed">
+            We are fully committed to data security and RBI guidelines. All processing is transparent, 
+            securely encrypted, and compliant with standard payment aggregator verification models.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ContactContent() {
+  return (
+    <div className="space-y-5 text-slate-600 text-sm leading-relaxed font-medium">
+      <p>
+        If you have any questions, feedback, or need support regarding card generation, credit recharges, 
+        or other services, please contact us. We are dedicated to responding to all queries within 24–48 hours.
+      </p>
+
+      <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-6 space-y-4">
+        <h4 className="font-extrabold text-[#064e3b] text-base border-b pb-2 border-emerald-100 uppercase tracking-wider">
+          Merchant Contact Information
+        </h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-bold text-slate-700">
+          <div>
+            <span className="text-slate-400 block uppercase tracking-wider text-[9px] mb-0.5">Legal Entity Name / व्यापारी का नाम</span>
+            <span className="text-slate-800 text-sm">SURAJ SUTAR</span>
+          </div>
+          <div>
+            <span className="text-slate-400 block uppercase tracking-wider text-[9px] mb-0.5">Brand Name / ब्रांड नाम</span>
+            <span className="text-slate-800 text-sm">AgriRecordPro</span>
+          </div>
+          <div className="md:col-span-2">
+            <span className="text-slate-400 block uppercase tracking-wider text-[9px] mb-0.5">Registered Office Address / कार्यालय का पता</span>
+            <span className="text-slate-800 leading-normal">
+              House of Chandrakant Sutar, Infront of ZP School, Kawali, Taluka-Ausa, District-Latur, Maharashtra - 413520
+            </span>
+          </div>
+          <div>
+            <span className="text-slate-400 block uppercase tracking-wider text-[9px] mb-0.5">Customer Support Phone / फ़ोन नंबर</span>
+            <a href="tel:+919834212549" className="text-emerald-700 hover:underline text-sm">+91 9834212549</a>
+          </div>
+          <div>
+            <span className="text-slate-400 block uppercase tracking-wider text-[9px] mb-0.5">Support Email / ईमेल पता</span>
+            <a href="mailto:surajsutar8154@gmail.com" className="text-emerald-700 hover:underline text-sm">surajsutar8154@gmail.com</a>
+          </div>
+          <div>
+            <span className="text-slate-400 block uppercase tracking-wider text-[9px] mb-0.5">Support Timings / सहायता का समय</span>
+            <span className="text-slate-800">Monday - Friday (9:00 AM - 6:00 PM IST)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TermsContent() {
   return (
     <div className="space-y-5 text-slate-600 text-sm leading-relaxed font-medium">
@@ -67,10 +169,9 @@ function TermsContent() {
         to as 'Platform').
       </p>
       <p>
-        The Platform is owned by <strong>9834212549</strong>, a company incorporated under the
-        Companies Act, 1956 with its registered office at House of Chandrakant Sutar, Infront of ZP
-        School, Kawali, Tq-Ausa, Dist-Latur (hereinafter referred to as 'Platform Owner', 'we',
-        'us', 'our').
+        The Platform is owned by <strong>SURAJ SUTAR</strong>, with its registered office address at 
+        House of Chandrakant Sutar, Infront of ZP School, Kawali, Taluka-Ausa, District-Latur, 
+        Maharashtra - 413520 (hereinafter referred to as 'Platform Owner', 'we', 'us', 'our').
       </p>
       <p>
         Your use of the Platform and services and tools are governed by the following terms and
@@ -165,7 +266,7 @@ function TermsContent() {
         </li>
         <li>
           All disputes arising out of or in connection with these Terms shall be subject to the
-          exclusive jurisdiction of the courts in Latur.
+          exclusive jurisdiction of the courts in Latur, Maharashtra.
         </li>
         <li>
           All concerns or communications relating to these Terms must be communicated to us using
@@ -181,9 +282,8 @@ function PrivacyContent() {
     <div className="space-y-5 text-slate-600 text-sm leading-relaxed font-medium">
       <h4 className="font-extrabold text-slate-800 text-base">Introduction</h4>
       <p>
-        This Privacy Policy describes how <strong>9834212549</strong> and its affiliates
-        (collectively "9834212549, we, our, us") collect, use, share, protect or otherwise process
-        your information/personal data through our website{" "}
+        This Privacy Policy describes how <strong>SURAJ SUTAR</strong> (collectively "we, our, us") 
+        collect, use, share, protect or otherwise process your information/personal data through our website{" "}
         <a
           href="https://agrirecord.onrender.com/"
           className="text-emerald-700 underline"
@@ -218,12 +318,6 @@ function PrivacyContent() {
         information (in order to enable use of certain features when opted for, available on the
         Platform) etc., all of the above being in accordance with applicable law(s).
       </p>
-      <p>
-        You always have the option to not provide information, by choosing not to use a particular
-        service or feature on the Platform. We may track your behaviour, preferences, and other
-        information that you choose to provide on our Platform. This information is compiled and
-        analysed on an aggregated basis.
-      </p>
 
       <h4 className="font-extrabold text-slate-800 text-sm mt-6">Usage</h4>
       <p>
@@ -241,10 +335,9 @@ function PrivacyContent() {
       <p>
         We may share your personal data internally within our group entities, our other corporate
         entities, and affiliates to provide you access to the services and products offered by them.
-        These entities and affiliates may market to you as a result of such sharing unless you
-        explicitly opt-out. We may disclose personal data to third parties such as sellers, business
-        partners, third party service providers including logistics partners, prepaid payment
-        instrument issuers, third-party reward programs and other payment opted by you.
+        We may disclose personal data to third parties such as sellers, business partners, third 
+        party service providers including logistics partners, prepaid payment instrument issuers, and 
+        payment gateways selected by you to fulfill orders and process payments.
       </p>
 
       <h4 className="font-extrabold text-slate-800 text-sm mt-6">Security Precautions</h4>
@@ -260,43 +353,16 @@ function PrivacyContent() {
       <h4 className="font-extrabold text-slate-800 text-sm mt-6">Data Deletion and Retention</h4>
       <p>
         You have an option to delete your account by visiting your profile and settings on our
-        Platform, this action would result in you losing all information related to your account. We
-        retain your personal data information for a period no longer than is required for the purpose
-        for which it was collected or as required under any applicable law. However, we may retain
-        data related to you if we believe it may be necessary to prevent fraud or future abuse or for
-        other legitimate purposes.
-      </p>
-
-      <h4 className="font-extrabold text-slate-800 text-sm mt-6">Your Rights</h4>
-      <p>
-        You may access, rectify, and update your personal data directly through the functionalities
-        provided on the Platform.
-      </p>
-
-      <h4 className="font-extrabold text-slate-800 text-sm mt-6">Consent</h4>
-      <p>
-        By visiting our Platform or by providing your information, you consent to the collection,
-        use, storage, disclosure and otherwise processing of your information on the Platform in
-        accordance with this Privacy Policy. You have an option to withdraw your consent that you
-        have already provided by writing to the Grievance Officer at the contact information provided
-        below. Please mention "Withdrawal of consent for processing personal data" in your subject
-        line of your communication.
-      </p>
-
-      <h4 className="font-extrabold text-slate-800 text-sm mt-6">
-        Changes to this Privacy Policy
-      </h4>
-      <p>
-        Please check our Privacy Policy periodically for changes. We may update this Privacy Policy
-        to reflect changes to our information practices. We may alert/notify you about the
-        significant changes to the Privacy Policy, in the manner as may be required under applicable
-        laws.
+        Platform. We retain your personal data information for a period no longer than is required 
+        for the purpose for which it was collected or as required under any applicable law.
       </p>
 
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mt-4">
         <h4 className="font-extrabold text-slate-800 text-sm">Grievance Officer</h4>
-        <p className="text-xs text-slate-500 font-bold mt-1">Contact us: Phone: 9834212549</p>
-        <p className="text-xs text-slate-500 font-bold">Time: Monday - Friday (9:00 - 18:00)</p>
+        <p className="text-xs text-slate-500 font-bold mt-1">Name: SURAJ SUTAR</p>
+        <p className="text-xs text-slate-500 font-bold">Email: surajsutar8154@gmail.com</p>
+        <p className="text-xs text-slate-500 font-bold">Contact Phone: +91 9834212549</p>
+        <p className="text-xs text-slate-500 font-bold">Address: House of Chandrakant Sutar, Infront of ZP School, Kawali, Taluka-Ausa, District-Latur, Maharashtra - 413520</p>
       </div>
     </div>
   );
@@ -311,38 +377,26 @@ function RefundContent() {
       </p>
       <ol className="list-decimal list-outside ml-5 space-y-3 text-slate-500 font-bold text-xs">
         <li>
-          Cancellations will only be considered if the request is made{" "}
+          Cancellations will only be considered if the request is made within{" "}
           <strong className="text-emerald-700">2 days</strong> of placing the order. However,
-          cancellation requests may not be entertained if the orders have been communicated to such
-          sellers/merchant(s) listed on the Platform and they have initiated the process of shipping
-          them, or the product is out for delivery. In such an event, you may choose to reject the
-          product at the doorstep.
+          cancellation requests may not be processed if you have already consumed/deducted the wallet 
+          credits to generate a farmer identity card.
         </li>
         <li>
-          9834212549 does not accept cancellation requests for perishable items like flowers,
-          eatables, etc. However, the refund/replacement can be made if the user establishes that the
-          quality of the product delivered is not good.
+          In case of receipt of failed credit recharges (amount deducted from your account but credits 
+          not updated in the wallet), please report to our customer support team with the transaction reference. 
+          The issue will be resolved, or a refund will be processed back to the original payment source.
         </li>
         <li>
-          In case of receipt of damaged or defective items, please report to our customer service
-          team. The request would be entertained once the seller/merchant listed on the Platform, has
-          checked and determined the same at its own end. This should be reported within{" "}
-          <strong className="text-emerald-700">2 days</strong> of receipt of products.
-        </li>
-        <li>
-          In case you feel that the product received is not as shown on the site or as per your
-          expectations, you must bring it to the notice of our customer service within{" "}
-          <strong className="text-emerald-700">2 days</strong> of receiving the product. The
-          customer service team after looking into your complaint will take an appropriate decision.
-        </li>
-        <li>
-          In case of complaints regarding the products that come with a warranty from the
-          manufacturers, please refer the issue to them.
+          If you are unsatisfied with the digital service quality or formatting tools, please bring 
+          it to the notice of our customer service within <strong className="text-emerald-700">2 days</strong> of receiving the service. 
+          The customer service team will look into your concern and make an appropriate decision.
         </li>
       </ol>
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-900 font-bold">
-        In case of any refunds approved by 9834212549, it will take <strong>24 days</strong> for the
-        refund to be processed to you.
+      <div className="bg-[#064e3b]/5 border border-[#064e3b]/10 rounded-xl p-4 text-xs text-slate-800 font-bold mt-4">
+        <span className="text-[#064e3b] uppercase tracking-wide block mb-1">Refund Processing Time</span>
+        Once a refund is approved by AgriRecordPro (SURAJ SUTAR), the refund transaction is initiated. 
+        It will take <strong className="text-emerald-800 font-black">5 to 7 working days</strong> for the refund amount to reflect in your original payment method (bank account, card, or UPI wallet) as per standard payment gateway schedules.
       </div>
     </div>
   );
@@ -352,34 +406,19 @@ function ReturnContent() {
   return (
     <div className="space-y-5 text-slate-600 text-sm leading-relaxed font-medium">
       <p>
-        We offer refund/exchange within first{" "}
-        <strong className="text-emerald-700">2 days</strong> from the date of your purchase. If{" "}
-        <strong>2 days</strong> have passed since your purchase, you will not be offered a return,
-        exchange or refund of any kind.
+        We offer refund/exchange within the first <strong className="text-emerald-700">2 days</strong> from the date of your purchase. If <strong>2 days</strong> have passed since your purchase, you will not be offered a return, exchange, or refund of any kind.
       </p>
-      <p>In order to become eligible for a return or an exchange:</p>
-      <ol className="list-[lower-roman] list-outside ml-5 space-y-2 text-slate-500 font-bold text-xs">
-        <li>
-          The purchased item should be unused and in the same condition as you received it.
-        </li>
-        <li>The item must have original packaging.</li>
-        <li>
-          If the item that you purchased on a sale, then the item may not be eligible for a
-          return/exchange.
-        </li>
+      <p>
+        Since AgriRecordPro provides digital credit formatting services, physical returns are not 
+        applicable. However, if a user experiences billing errors or transaction failures:
+      </p>
+      <ol className="list-decimal list-outside ml-5 space-y-2 text-slate-500 font-bold text-xs">
+        <li>The request should be raised within 2 days of the purchase date.</li>
+        <li>The purchased wallet credits should remain unused on the account to be eligible for a refund.</li>
       </ol>
       <p>
-        Further, only such items are replaced by us (based on an exchange request), if such items are
-        found defective or damaged.
-      </p>
-      <p>
-        You agree that there may be a certain category of products/items that are exempted from
-        returns or refunds. Such categories of the products would be identified to you at the time of
-        purchase. For exchange/return accepted request(s) (as applicable), once your returned
-        product/item is received and inspected by us, we will send you an email to notify you about
-        receipt of the returned/exchanged product. Further, if the same has been approved after the
-        quality check at our end, your request (i.e. return/exchange) will be processed in accordance
-        with our policies.
+        Once a dispute is validated and approved by customer support, standard refund processing 
+        times apply, and the corresponding digital credits will be revoked from your account wallet.
       </p>
     </div>
   );
@@ -388,31 +427,34 @@ function ReturnContent() {
 function ShippingContent() {
   return (
     <div className="space-y-5 text-slate-600 text-sm leading-relaxed font-medium">
-      <p>
-        The orders for the user are shipped through registered domestic courier companies and/or
-        speed post only. Orders are shipped within{" "}
-        <strong className="text-emerald-700">2 days</strong> from the date of the order and/or
-        payment or as per the delivery date agreed at the time of order confirmation and delivering
-        of the shipment, subject to courier company/post office norms.
-      </p>
-      <p>
-        Platform Owner shall not be liable for any delay in delivery by the courier company/postal
-        authority.
-      </p>
-      <p>
-        Delivery of all orders will be made to the address provided by the buyer at the time of
-        purchase. Delivery of our services will be confirmed on your email ID as specified at the
-        time of registration.
-      </p>
-      <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-xs text-red-800 font-bold">
-        If there are any shipping cost(s) levied by the seller or the Platform Owner (as the case
-        be), the same is not refundable.
+      <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-4 text-xs text-emerald-900 font-bold mb-4">
+        <span className="text-[#064e3b] uppercase tracking-wide block mb-1 font-black">Digital Service Delivery Policy</span>
+        AgriRecordPro is a digital identity card formatting SaaS utility. We do not ship physical products. 
+        All card services, wallet credit additions, and formatted PDF printouts are delivered digitally online.
       </div>
+      
+      <p className="font-semibold text-slate-700">Delivery Guidelines:</p>
+      <ul className="list-disc list-inside space-y-2 text-xs text-slate-500 font-bold">
+        <li>
+          <strong>Wallet Credits:</strong> Added instantly to your account dashboard upon successful payment verification.
+        </li>
+        <li>
+          <strong>PDF Generation and Download:</strong> Instant download link is generated immediately on your dashboard after entering the details and submitting the card.
+        </li>
+        <li>
+          <strong>Shipping Charges:</strong> There are ₹0.00 shipping fees or delivery fees since no physical courier shipment is required.
+        </li>
+        <li>
+          <strong>Delivery Tracking:</strong> Transaction history and active balances are visible on the secure "Wallet" section of your dashboard.
+        </li>
+      </ul>
     </div>
   );
 }
 
 const CONTENT_MAP = {
+  "about-us": AboutContent,
+  "contact-us": ContactContent,
   terms: TermsContent,
   "privacy-policy": PrivacyContent,
   "refund-policy": RefundContent,
@@ -425,12 +467,16 @@ export default function PolicyPage() {
   const policy = POLICIES[policyType];
   const ContentComponent = CONTENT_MAP[policyType];
 
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [policyType]);
+
   if (!policy || !ContentComponent) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-        <h2 className="text-2xl font-black text-slate-800">Policy Not Found</h2>
+        <h2 className="text-2xl font-black text-slate-800">Page Not Found</h2>
         <p className="text-sm text-slate-500 font-bold mt-2">
-          The requested policy page does not exist.
+          The requested page does not exist.
         </p>
         <Link
           to="/"
@@ -472,7 +518,7 @@ export default function PolicyPage() {
           </div>
         </div>
 
-        {/* Quick Navigation to other policies */}
+        {/* Quick Navigation */}
         <div className="border-b border-slate-100 px-6 sm:px-8 py-3 bg-slate-50/50 overflow-x-auto">
           <div className="flex gap-2 min-w-max">
             {POLICY_LIST.map((p) => {
@@ -497,7 +543,7 @@ export default function PolicyPage() {
         </div>
 
         {/* Policy Content */}
-        <div className="px-6 sm:px-8 py-8">
+        <div className="px-6 sm:px-8 py-8 animate-in fade-in duration-200">
           <ContentComponent />
         </div>
 
@@ -509,7 +555,7 @@ export default function PolicyPage() {
             </p>
             <div className="flex gap-3">
               {POLICY_LIST.filter((p) => p.id !== policyType)
-                .slice(0, 2)
+                .slice(0, 3)
                 .map((p) => (
                   <Link
                     key={p.id}

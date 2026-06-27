@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { HashRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Header from "./components/Header";
 import MainGenerator from "./pages/MainGenerator";
 import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel";
 import PolicyPage from "./pages/PolicyPage";
-import { AboutModal, ContactModal, RechargeModal, ProfileModal } from "./components/Modals";
+import { RechargeModal, ProfileModal } from "./components/Modals";
 import { Landmark, HelpCircle, Mail, ShieldAlert, FileText, Truck, RotateCcw, CreditCard } from "lucide-react";
 import { auth, googleProvider, signInWithPopup } from "./firebase";
 
 export default function App() {
   const [user, setUser] = useState(null);
-  const [aboutOpen, setAboutOpen] = useState(false);
-  const [contactOpen, setContactOpen] = useState(false);
   const [rechargeOpen, setRechargeOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -200,36 +198,26 @@ export default function App() {
                 <Truck className="w-4 h-4" /> Shipping Policy
               </Link>
             </div>
-            <div className="flex gap-6 justify-center md:justify-end">
-              <button 
-                onClick={() => setAboutOpen(true)}
-                className="hover:text-slate-600 transition-colors flex items-center gap-1 cursor-pointer"
+            <div className="flex flex-wrap gap-x-6 gap-y-2 justify-center md:justify-end">
+              <Link 
+                to="/about-us"
+                className="hover:text-slate-600 transition-colors flex items-center gap-1"
               >
                 <HelpCircle className="w-4 h-4" /> About Us
-              </button>
-              <button 
-                onClick={() => setContactOpen(true)}
-                className="hover:text-slate-600 transition-colors flex items-center gap-1 cursor-pointer"
+              </Link>
+              <Link 
+                to="/contact-us"
+                className="hover:text-slate-600 transition-colors flex items-center gap-1"
               >
                 <Mail className="w-4 h-4" /> Support Helpdesk
-              </button>
+              </Link>
             </div>
           </div>
         </footer>
 
         {/* Google Sign-in Handled Directly */}
 
-        {/* About Info Modal */}
-        <AboutModal 
-          isOpen={aboutOpen} 
-          onClose={() => setAboutOpen(false)} 
-        />
 
-        {/* Help Desk Support Modal */}
-        <ContactModal 
-          isOpen={contactOpen} 
-          onClose={() => setContactOpen(false)} 
-        />
 
         {/* Recharge Wallet Modal */}
         <RechargeModal 
