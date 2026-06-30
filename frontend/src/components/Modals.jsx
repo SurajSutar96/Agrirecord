@@ -401,160 +401,14 @@ export const ContactModal = ({ isOpen, onClose }) => {
 };
 
 export const RechargeModal = ({ isOpen, onClose, user, onUpdateCredits }) => {
-  const [step, setStep] = useState("packages"); // "packages", "cashfree_sdk", "processing", "success"
-  const [selectedPkg, setSelectedPkg] = useState({ id: "pkg_10_credits", name: "10 Credits (Starter)", amount: 100, credits: 10 });
-  const [paymentMethod, setPaymentMethod] = useState("card"); // "card", "upi"
-  
-  // Card input states
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvv, setCardCvv] = useState("");
-  const [cardName, setCardName] = useState("");
-  const [saveCard, setSaveCard] = useState(true);
-  
-  // Saved card state from localStorage
-  const [savedCard, setSavedCard] = useState(() => {
-    const saved = localStorage.getItem("agri_saved_card");
-    return saved ? JSON.parse(saved) : null;
-  });
-  const [useSavedCard, setUseSavedCard] = useState(!!localStorage.getItem("agri_saved_card"));
-
-  // UPI input states
-  const [upiId, setUpiId] = useState("");
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [step, setStep] = useState("packages"); // "packages", "contact_admin"
+  const [selectedPkg, setSelectedPkg] = useState({ id: "pkg_10_credits", name: "10 Credits (Starter Pack)", amount: 100, credits: 10 });
 
   const packages = [
     { id: "pkg_1_credit", name: "1 Credit (Single Print)", amount: 15, credits: 1 },
     { id: "pkg_10_credits", name: "10 Credits (Starter Pack)", amount: 100, credits: 10, popular: true },
     { id: "pkg_50_credits", name: "50 Credits (Bulk Pack)", amount: 400, credits: 50 }
   ];
-
-  const handleSelectPackage = (pkg) => {
-    setSelectedPkg(pkg);
-    setStep("cashfree_sdk");
-  };
-
-  const formatCardNumber = (value) => {
-    const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
-    const matches = v.match(/\d{4,16}/g);
-    const match = (matches && matches[0]) || "";
-    const parts = [];
-
-    for (let i = 0, len = match.length; i < len; i += 4) {
-      parts.push(match.substring(i, i + 4));
-    }
-
-    if (parts.length > 0) {
-      return parts.join(" ");
-    } else {
-      return v;
-    }
-  };
-
-  const formatExpiry = (value) => {
-    const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
-    if (v.length >= 2) {
-      return `${v.slice(0, 2)}/${v.slice(2, 4)}`;
-    }
-    return v;
-  };
-
-  const handleProceedPayment = async () => {
-    setError("");
-    
-    // Validations
-    if (paymentMethod === "card") {
-      if (!useSavedCard) {
-        const cleanCard = cardNumber.replace(/\s/g, "");
-        if (cleanCard.length < 16) {
-          setError("Please enter a valid 16-digit card number.");
-          return;
-        }
-        if (!cardExpiry.includes("/") || cardExpiry.length < 5) {
-          setError("Please enter card expiry in MM/YY format.");
-          return;
-        }
-        if (cardCvv.length < 3) {
-          setError("Please enter CVV.");
-          return;
-        }
-        if (!cardName) {
-          setError("Please enter cardholder name.");
-          return;
-        }
-      }
-    } else {
-      if (!upiId || !upiId.includes("@")) {
-        setError("Please enter a valid UPI ID (e.g., name@okaxis).");
-        return;
-      }
-    }
-
-    setStep("processing");
-    setLoading(true);
-
-    try {
-      // 1. Create order in SQLite database via API
-      const orderRes = await fetch("/api/create-cashfree-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customerId: user.id,
-          customerPhone: user.mobile || "9999999999",
-          customerName: user.name || "Customer",
-          amount: selectedPkg.amount,
-          packageId: selectedPkg.id
-        })
-      });
-      const orderData = await orderRes.json();
-
-      if (!orderRes.ok || !orderData.order_id) {
-        throw new Error(orderData.error || "Order creation failed");
-      }
-
-      // Save card details if requested
-      if (paymentMethod === "card" && saveCard && !useSavedCard) {
-        const maskedCard = {
-          number: `•••• •••• •••• ${cardNumber.replace(/\s/g, "").slice(-4)}`,
-          name: cardName,
-          expiry: cardExpiry
-        };
-        localStorage.setItem("agri_saved_card", JSON.stringify(maskedCard));
-        setSavedCard(maskedCard);
-      }
-
-      // Simulate a small delay for premium aesthetic payment processing experience
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // 2. Verify order (this will credit the wallet in sqlite)
-      const verifyRes = await fetch("/api/verify-cashfree-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          order_id: orderData.order_id,
-          customerId: user.id,
-          creditsToAdd: selectedPkg.credits
-        })
-      });
-      const verifyData = await verifyRes.json();
-
-      if (verifyRes.ok && verifyData.success) {
-        // Success
-        onUpdateCredits(selectedPkg.credits);
-        setStep("success");
-      } else {
-        throw new Error(verifyData.order_status || "Verification failed");
-      }
-
-    } catch (err) {
-      setError(err.message || "Payment verification failed. Please try again.");
-      setStep("cashfree_sdk");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -569,16 +423,12 @@ export const RechargeModal = ({ isOpen, onClose, user, onUpdateCredits }) => {
               Add Wallet Credits / क्रेडिट खरीदें
             </h3>
             <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-              Secure Checkout Powered by Cashfree SDK
+              {step === "packages"
+                ? "Select a recharge plan / रिचार्ज प्लान चुनें"
+                : "Contact Admin for Recharge / रिचार्ज के लिए संपर्क करें"}
             </p>
           </div>
         </div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 rounded-xl p-3 text-xs font-bold animate-pulse">
-            {error}
-          </div>
-        )}
 
         {/* Step 1: Packages selection */}
         {step === "packages" && (
@@ -617,228 +467,79 @@ export const RechargeModal = ({ isOpen, onClose, user, onUpdateCredits }) => {
 
             <div className="pt-4">
               <button
-                onClick={() => setStep("cashfree_sdk")}
-                className="w-full py-3 bg-[#064e3b] hover:bg-[#085a44] text-white text-sm font-black rounded-xl uppercase tracking-wider transition-colors shadow-lg cursor-pointer"
+                onClick={() => setStep("contact_admin")}
+                className="w-full py-3 bg-[#064e3b] hover:bg-[#085a44] text-white text-sm font-black rounded-xl uppercase tracking-wider transition-colors shadow-lg cursor-pointer text-center"
               >
-                Proceed to Checkout (₹{selectedPkg.amount})
+                Proceed to Recharge / आगे बढ़ें (₹{selectedPkg.amount})
               </button>
             </div>
           </div>
         )}
 
-        {/* Step 2: Cashfree Mock Payment Page */}
-        {step === "cashfree_sdk" && (
-          <div className="space-y-4">
+        {/* Step 2: Contact Admin to Recharge */}
+        {step === "contact_admin" && (
+          <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            {/* Selected Package Details */}
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex justify-between items-center text-xs font-bold text-slate-700">
               <div>
                 <span className="text-slate-400 block uppercase tracking-wider text-[9px]">Selected Package</span>
                 <span className="font-black text-slate-800">{selectedPkg.name}</span>
               </div>
               <div className="text-right">
-                <span className="text-slate-400 block uppercase tracking-wider text-[9px]">Amount Payable</span>
-                <span className="font-black text-emerald-800 text-sm">₹{selectedPkg.amount}.00</span>
+                <span className="text-slate-400 block uppercase tracking-wider text-[9px]">Credits to Add</span>
+                <span className="font-black text-emerald-800 text-sm">{selectedPkg.credits} Credits (₹{selectedPkg.amount})</span>
               </div>
             </div>
 
-            {/* Cashfree Mock Window Header */}
-            <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
-              <div className="bg-[#1e293b] text-white px-4 py-3 flex justify-between items-center text-[10px] font-black uppercase tracking-wider">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
-                  <span>Cashfree PG - Secure Sandboxed Environment</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Lock className="w-3.5 h-3.5 text-slate-400" />
-                  <span>256-bit SSL</span>
-                </div>
+            {/* Admin Details Card */}
+            <div className="bg-emerald-50/40 border border-emerald-100/80 rounded-3xl p-6 text-center space-y-4">
+              <div className="mx-auto w-16 h-16 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center shadow-inner">
+                <User className="w-8 h-8" />
               </div>
-
-              <div className="p-4 space-y-4">
-                {/* Method selector */}
-                <div className="flex border-b border-slate-200 text-xs font-bold text-slate-500">
-                  <button
-                    onClick={() => setPaymentMethod("card")}
-                    className={`flex-1 pb-2 border-b-2 transition-all cursor-pointer text-center ${
-                      paymentMethod === "card" ? "border-emerald-600 text-emerald-700 font-extrabold" : "border-transparent"
-                    }`}
-                  >
-                    Credit / Debit Card
-                  </button>
-                  <button
-                    onClick={() => setPaymentMethod("upi")}
-                    className={`flex-1 pb-2 border-b-2 transition-all cursor-pointer text-center ${
-                      paymentMethod === "upi" ? "border-emerald-600 text-emerald-700 font-extrabold" : "border-transparent"
-                    }`}
-                  >
-                    UPI / Instant Pay
-                  </button>
-                </div>
-
-                {paymentMethod === "card" ? (
-                  <div className="space-y-3">
-                    {/* Saved card quick select */}
-                    {savedCard && (
-                      <div className="flex items-center justify-between p-3 border border-emerald-100 bg-emerald-50/20 rounded-xl">
-                        <label className="flex items-center gap-2.5 text-xs font-bold text-slate-700 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={useSavedCard}
-                            onChange={(e) => setUseSavedCard(e.target.checked)}
-                            className="rounded text-emerald-600 focus:ring-emerald-500"
-                          />
-                          <div>
-                            <span className="block font-black text-slate-800">Use Saved Card ({savedCard.number})</span>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase">{savedCard.name} | Expiry: {savedCard.expiry}</span>
-                          </div>
-                        </label>
-                        <CreditCard className="w-6 h-6 text-emerald-700 shrink-0" />
-                      </div>
-                    )}
-
-                    {!useSavedCard && (
-                      <div className="space-y-3">
-                        <div className="space-y-1">
-                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
-                            Card Number / कार्ड नंबर
-                          </label>
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                              <CreditCard className="w-4 h-4" />
-                            </span>
-                            <input
-                              type="text"
-                              maxLength={19}
-                              value={cardNumber}
-                              onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                              placeholder="4111 2222 3333 4444"
-                              className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-xs font-bold text-slate-700 font-mono"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
-                              Expiry Date
-                            </label>
-                            <input
-                              type="text"
-                              maxLength={5}
-                              value={cardExpiry}
-                              onChange={(e) => setCardExpiry(formatExpiry(e.target.value))}
-                              placeholder="MM/YY"
-                              className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-xs font-bold text-slate-700 font-mono"
-                            />
-                          </div>
-
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
-                              CVV / सीवीवी
-                            </label>
-                            <input
-                              type="password"
-                              maxLength={3}
-                              value={cardCvv}
-                              onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ""))}
-                              placeholder="•••"
-                              className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-xs font-bold text-slate-700 font-mono"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
-                            Cardholder Name / नाम
-                          </label>
-                          <input
-                            type="text"
-                            value={cardName}
-                            onChange={(e) => setCardName(e.target.value.toUpperCase())}
-                            placeholder="NAME ON CARD"
-                            className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-xs font-bold text-slate-700 uppercase"
-                          />
-                        </div>
-
-                        {/* Save Card Option */}
-                        <div className="flex items-center gap-2 pt-1.5">
-                          <input
-                            type="checkbox"
-                            id="save_card"
-                            checked={saveCard}
-                            onChange={(e) => setSaveCard(e.target.checked)}
-                            className="rounded text-emerald-600 focus:ring-emerald-500"
-                          />
-                          <label htmlFor="save_card" className="text-[10px] font-bold text-slate-500 cursor-pointer">
-                            Save this card securely for future payments
-                          </label>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
-                        UPI ID / वीपीए (Ex: name@upi)
-                      </label>
-                      <input
-                        type="text"
-                        value={upiId}
-                        onChange={(e) => setUpiId(e.target.value.toLowerCase())}
-                        placeholder="username@bankid"
-                        className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-xs font-bold text-slate-700"
-                      />
-                    </div>
-                  </div>
-                )}
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase font-black tracking-widest text-[#064e3b]">Recharge Administrator / व्यवस्थापक</span>
+                <h4 className="text-2xl font-black text-slate-800">Aditya Jagtap</h4>
+                <p className="text-sm font-bold text-slate-500">Contact Number: <span className="text-emerald-800 font-extrabold">8788900807</span></p>
               </div>
+              <p className="text-xs font-semibold text-slate-500 max-w-sm mx-auto leading-relaxed">
+                Please contact Aditya Jagtap to complete your payment and recharge your account wallet.
+              </p>
             </div>
 
-            {/* Actions */}
-            <div className="flex justify-between items-center gap-3 pt-2">
+            {/* Call and WhatsApp Quick Actions */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <a
+                href="tel:8788900807"
+                className="flex items-center justify-center gap-2 py-3 bg-[#064e3b] hover:bg-[#085a44] text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-md transition-all text-center cursor-pointer"
+              >
+                <Phone className="w-4 h-4" />
+                Call Admin / कॉल करें
+              </a>
+              <a
+                href={`https://wa.me/918788900807?text=${encodeURIComponent(
+                  `Hi Aditya, I would like to recharge my account with the "${selectedPkg.name}" (Price: ₹${selectedPkg.amount}). Registered details - Name: ${user?.name || 'Farmer'}, Mobile: ${user?.mobile || 'N/A'}.`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 py-3 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-md transition-all text-center cursor-pointer"
+              >
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.488 1.459 5.416 1.46 5.561 0 10.088-4.526 10.091-10.087.001-2.693-1.045-5.225-2.946-7.128C17.3 1.503 14.77 1.459 12.008 1.459c-5.564 0-10.09 4.526-10.094 10.088-.002 1.902.501 3.762 1.458 5.378L1.879 21.62l4.768-1.258L6.647 19.16z"/>
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004"/>
+                </svg>
+                Chat on WhatsApp / व्हाट्सएप चैट
+              </a>
+            </div>
+
+            {/* Back Action */}
+            <div className="flex justify-between items-center pt-2">
               <button
                 onClick={() => setStep("packages")}
                 className="px-5 py-2.5 border border-slate-200 text-slate-500 hover:bg-slate-50 text-xs font-bold rounded-xl cursor-pointer"
               >
-                Go Back
-              </button>
-              <button
-                onClick={handleProceedPayment}
-                className="flex-1 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-md cursor-pointer"
-              >
-                Pay ₹{selectedPkg.amount}.00 Securely
+                Go Back / वापस जाएं
               </button>
             </div>
-          </div>
-        )}
-
-        {/* Step 3: Processing Animation */}
-        {step === "processing" && (
-          <div className="text-center py-10 space-y-4">
-            <Loader2 className="w-12 h-12 text-emerald-700 animate-spin mx-auto" />
-            <h4 className="text-lg font-black text-slate-800">Processing Your Payment...</h4>
-            <p className="text-xs text-slate-400 font-bold max-w-sm mx-auto leading-relaxed">
-              We are connecting to the Cashfree gateway API and verifying your details. Please do not refresh the page or click back.
-            </p>
-          </div>
-        )}
-
-        {/* Step 4: Success confirmation */}
-        {step === "success" && (
-          <div className="text-center py-8 space-y-4">
-            <div className="inline-flex items-center justify-center bg-emerald-100 p-4 rounded-full text-emerald-600">
-              <Check className="w-12 h-12" />
-            </div>
-            <h4 className="text-2xl font-black text-slate-800">Payment Successful!</h4>
-            <p className="text-sm text-slate-500 font-bold max-w-md mx-auto">
-              We have credited <strong>{selectedPkg.credits} Credits</strong> to your wallet. You can now use them to print and download farmer cards.
-            </p>
-            <button
-              onClick={onClose}
-              className="px-6 py-2.5 bg-[#064e3b] hover:bg-[#085a44] text-white text-xs font-black rounded-xl uppercase tracking-wider transition-colors shadow-lg"
-            >
-              Continue to Dashboard
-            </button>
           </div>
         )}
       </div>
