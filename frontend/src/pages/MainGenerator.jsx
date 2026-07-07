@@ -4,8 +4,9 @@ import jsPDF from "jspdf";
 import CardPreview from "../components/CardPreview";
 import { 
   Plus, Trash2, Save, Download, Printer, Image, ShieldAlert,
-  Loader2, CreditCard, ChevronRight, UserPlus, Lock
+  Loader2, CreditCard, ChevronRight, UserPlus, Lock, Play, Video
 } from "lucide-react";
+import { translations } from "../translations";
 
 // List of states districts
 const BIHAR_DISTRICTS = ["Araria","Arwal","Aurangabad","Banka","Begusarai","Bhagalpur","Bhojpur","Buxar","Darbhanga","East Champaran","Gaya","Gopalganj","Jamui","Jehanabad","Kaimur","Katihar","Khagaria","Kishanjganj","Lakhisarai","Madhepura","Madhubani","Munger","Muzaffarpur","Nalanda","Nawada","Patna","Purnia","Rohtas","Saharsa","Samastipur","Saran","Sheikhpura","Sheohar","Sitamarhi","Siwan","Supaul","Vaishali","West Champaran"].sort();
@@ -39,7 +40,7 @@ const loadCashfreeSDK = () => {
   });
 };
 
-export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, onOpenRecharge }) {
+export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, onOpenRecharge, lang }) {
   const previewRef = useRef(null);
   const pdfRef = useRef(null);
   
@@ -67,6 +68,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
   const [statusMessage, setStatusMessage] = useState("");
   const [isPrinting, setIsPrinting] = useState(false);
   const [step, setStep] = useState(1);
+  const [activeVideoGuide, setActiveVideoGuide] = useState(null);
 
   // Form is locked when user is not logged in OR has 0 credits (and is not admin)
   const isFormLocked = !user || (user.role !== "Admin" && user.freeCredits === 0);
@@ -130,7 +132,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
 
   const removeLandRow = (id) => {
     if (formData.landDetails.length <= 1) {
-      alert("At least one land details record is required.");
+      window.showToast("At least one land details record is required.", "warning");
       return;
     }
     setFormData(prev => ({
@@ -185,7 +187,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
   // Checkout and wallet validation logic
   const handleAction = async (actionType) => {
     if (!user) {
-      alert("कृपया कार्ड को प्रिंट या सहेजने के लिए पहले लॉगिन करें। (Please login first to print or save cards).");
+      window.showToast("कृपया कार्ड को प्रिंट या सहेजने के लिए पहले लॉगिन करें। (Please login first to print or save cards).", "warning");
       // Trigger login modal hook (handled via App.jsx state)
       const event = new CustomEvent("open_login_modal");
       window.dispatchEvent(event);
@@ -204,7 +206,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
       await executeActionWithCreditDeduction(actionType);
     } else {
       // Wallet empty: open the Recharge Modal to allow adding credits
-      alert("आपके वॉलेट में 0 क्रेडिट हैं। कृपया आगे बढ़ने के लिए क्रेडिट खरीदें। (You have 0 credits. Please purchase credits to proceed.)");
+      window.showToast("आपके वॉलेट में 0 क्रेडिट हैं। कृपया आगे बढ़ने के लिए क्रेडिट खरीदें। (You have 0 credits. Please purchase credits to proceed.)", "warning");
       if (onOpenRecharge) {
         onOpenRecharge();
       }
@@ -234,7 +236,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
         throw new Error(data.detail || "Credit deduction failed");
       }
     } catch (err) {
-      alert("Credit validation failed. Action cancelled.");
+      window.showToast("Credit validation failed. Action cancelled.", "error");
       setActionLoading(false);
       setStatusMessage("");
     }
@@ -266,7 +268,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
     }
 
     if (actionType === "save") {
-      alert("किसान पहचान पत्र डेटाबेस में सफलतापूर्वक सहेजा गया! (Card saved successfully)");
+      window.showToast("किसान पहचान पत्र डेटाबेस में सफलतापूर्वक सहेजा गया! (Card saved successfully)", "success");
       setActionLoading(false);
       setStatusMessage("");
     } else if (actionType === "pdf") {
@@ -340,7 +342,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
   const downloadPDF = async () => {
     const cardContainer = pdfRef.current;
     if (!cardContainer) {
-      alert("Preview card elements not found.");
+      window.showToast("Preview card elements not found.", "error");
       setActionLoading(false);
       setStatusMessage("");
       return;
@@ -393,7 +395,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
       setTimeout(() => setStatusMessage(""), 2000);
     } catch (err) {
       console.error("PDF download failed:", err);
-      alert("PDF generation failed. Try printing card directly or use Chrome desktop.");
+      window.showToast("PDF generation failed. Try printing card directly or use Chrome desktop.", "error");
     } finally {
       setActionLoading(false);
       setStatusMessage("");
@@ -416,10 +418,10 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
       <div className="mb-4 sm:mb-8 flex flex-col md:flex-row md:items-center md:justify-between border border-emerald-100 rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-6 shadow-xs gap-3 sm:gap-4 no-print">
         <div className="space-y-1">
           <h2 className="text-xl sm:text-3xl font-black text-slate-800 tracking-tight leading-tight">
-            Digital Kisan Card Generator
+            {translations[lang].title}
           </h2>
           <p className="text-xs sm:text-sm font-semibold text-slate-400">
-            Generate, preview, and download custom, printable Farmer ID Cards.
+            {translations[lang].subtitle}
           </p>
         </div>
       </div>
@@ -440,22 +442,46 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
               </div>
               <div className="text-center px-6">
                 <p className="text-sm font-black text-slate-800 uppercase tracking-wider mb-1">
-                  {!user ? "Login Required / लॉगिन आवश्यक" : "Form Locked / फॉर्म बंद"}
+                  {!user 
+                    ? (lang === "mr" ? "लॉगिन आवश्यक आहे" : lang === "hi" ? "लॉगिन आवश्यक है" : "Login Required") 
+                    : (lang === "mr" ? "फॉर्म बंद आहे" : lang === "hi" ? "फॉर्म बंद है" : "Form Locked")
+                  }
                 </p>
                 <p className="text-xs font-bold text-slate-500 text-center max-w-xs leading-relaxed">
                   {!user
-                    ? "Please sign in to your account to access the card generator and start creating Farmer ID cards."
-                    : "Your wallet balance is ₹0. Please recharge your wallet with credits to start filling card details."
+                    ? (lang === "mr" ? "शेतकरी ओळखपत्र बनवणे सुरू करण्यासाठी कृपया तुमच्या खात्यात लॉगिन करा." : lang === "hi" ? "किसान पहचान पत्र बनाना शुरू करने के लिए कृपया अपने खाते में लॉगिन करें।" : "Please sign in to your account to access the card generator and start creating Farmer ID cards.")
+                    : (lang === "mr" ? "तुमच्या वॉलेटमध्ये 0 क्रेडिट आहे. कृपया ओळखपत्र बनवणे सुरू करण्यासाठी क्रेडिट रिचार्ज करा." : lang === "hi" ? "आपके वॉलेट में 0 क्रेडिट हैं। कृपया किसान पहचान पत्र बनाना शुरू करने के लिए क्रेडिट रिचार्ज करें।" : "Your wallet balance is 0 credits. Please recharge your wallet with credits to start filling card details.")
                   }
                 </p>
               </div>
+              {!user && (
+                <div className="flex flex-col gap-2 w-full max-w-xs px-6 select-none">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const event = new CustomEvent("open_login_modal");
+                      window.dispatchEvent(event);
+                    }}
+                    className="cursor-pointer w-full px-5 py-3 text-white text-xs font-black rounded-xl uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 bg-[#064e3b] hover:bg-[#085a44]"
+                  >
+                    <UserPlus className="w-4 h-4 text-[#cddc39]" /> {lang === "mr" ? "गूगल द्वारे लॉगिन करा" : lang === "hi" ? "गूगल से लॉगिन करें" : "Sign In with Google"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveVideoGuide("login")}
+                    className="cursor-pointer w-full px-5 py-2.5 text-slate-700 text-xs font-extrabold rounded-xl uppercase tracking-wider transition-all border border-slate-300 hover:bg-slate-50 bg-white flex items-center justify-center gap-2"
+                  >
+                    <Play className="w-3.5 h-3.5 text-emerald-800 fill-emerald-850" /> {lang === "mr" ? "व्हिडिओ मार्गदर्शक पहा" : lang === "hi" ? "वीडियो गाइड देखें" : "Watch Video Guide"}
+                  </button>
+                </div>
+              )}
               {user && (
                 <button
                   type="button"
                   onClick={onOpenRecharge}
                   className="cursor-pointer px-5 py-2.5 text-white text-xs font-black rounded-xl uppercase tracking-wider transition-all shadow-md flex items-center gap-1.5 bg-amber-700 hover:bg-amber-800"
                 >
-                  <CreditCard className="w-4 h-4" /> Recharge Wallet / क्रेडिट खरीदें
+                  <CreditCard className="w-4 h-4" /> {lang === "mr" ? "वॉलेट रिचार्ज करा" : lang === "hi" ? "वॉलेट रिचार्ज करें" : "Recharge Wallet"}
                 </button>
               )}
             </div>
@@ -470,7 +496,9 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
               <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${
                 step === 1 ? "bg-[#064e3b] text-white shadow-md scale-110" : "bg-emerald-50 text-[#064e3b] hover:bg-emerald-100"
               }`}>1</span>
-              <span className={`text-xs font-extrabold uppercase tracking-wider transition-colors ${step === 1 ? "text-slate-800" : "text-slate-400 group-hover:text-slate-600"}`}>Basic Info</span>
+              <span className={`text-xs font-extrabold uppercase tracking-wider transition-colors ${step === 1 ? "text-slate-800" : "text-slate-400 group-hover:text-slate-600"}`}>
+                {lang === "mr" ? "मूल माहिती" : lang === "hi" ? "मूल जानकारी" : "Basic Info"}
+              </span>
             </button>
             <div className="h-[2px] flex-1 mx-3 bg-slate-100"></div>
             <button
@@ -481,7 +509,9 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
               <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${
                 step === 2 ? "bg-[#064e3b] text-white shadow-md scale-110" : "bg-emerald-50 text-[#064e3b] hover:bg-emerald-100"
               }`}>2</span>
-              <span className={`text-xs font-extrabold uppercase tracking-wider transition-colors ${step === 2 ? "text-slate-800" : "text-slate-400 group-hover:text-slate-600"}`}>Photo & Addr</span>
+              <span className={`text-xs font-extrabold uppercase tracking-wider transition-colors ${step === 2 ? "text-slate-800" : "text-slate-400 group-hover:text-slate-600"}`}>
+                {lang === "mr" ? "फोटो आणि पत्ता" : lang === "hi" ? "फोटो और पता" : "Photo & Addr"}
+              </span>
             </button>
             <div className="h-[2px] flex-1 mx-3 bg-slate-100"></div>
             <button
@@ -492,7 +522,9 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
               <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${
                 step === 3 ? "bg-[#064e3b] text-white shadow-md scale-110" : "bg-emerald-50 text-[#064e3b] hover:bg-emerald-100"
               }`}>3</span>
-              <span className={`text-xs font-extrabold uppercase tracking-wider transition-colors ${step === 3 ? "text-slate-800" : "text-slate-400 group-hover:text-slate-600"}`}>Land Details</span>
+              <span className={`text-xs font-extrabold uppercase tracking-wider transition-colors ${step === 3 ? "text-slate-800" : "text-slate-400 group-hover:text-slate-600"}`}>
+                {lang === "mr" ? "जमिनीचा तपशील" : lang === "hi" ? "भूमि विवरण" : "Land Details"}
+              </span>
             </button>
           </div>
 
@@ -501,7 +533,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
             <div className="space-y-5 animate-in fade-in slide-in-from-left duration-200">
               <div className="border-b pb-2 border-slate-100">
                 <h3 className="text-sm font-extrabold text-slate-700 uppercase tracking-wider">
-                  Basic Details / मूल विवरण
+                  {lang === "mr" ? "मूल तपशील" : lang === "hi" ? "मूल विवरण" : "Basic Details"}
                 </h3>
               </div>
 
@@ -509,7 +541,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
-                    State / राज्य
+                    {translations[lang].state}
                   </label>
                   <select
                     name="state"
@@ -517,16 +549,16 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
                     onChange={handleStateChange}
                     className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-sm font-bold text-slate-700 bg-white"
                   >
-                    <option value="Maharashtra">Maharashtra / महाराष्ट्र</option>
-                    <option value="Bihar">Bihar / बिहार</option>
-                    <option value="Uttar Pradesh">Uttar Pradesh / उत्तर प्रदेश</option>
-                    <option value="Rajasthan">Rajasthan / राजस्थान</option>
+                    <option value="Maharashtra">{lang === "mr" || lang === "hi" ? "महाराष्ट्र" : "Maharashtra"}</option>
+                    <option value="Bihar">{lang === "mr" || lang === "hi" ? "बिहार" : "Bihar"}</option>
+                    <option value="Uttar Pradesh">{lang === "mr" || lang === "hi" ? "उत्तर प्रदेश" : "Uttar Pradesh"}</option>
+                    <option value="Rajasthan">{lang === "mr" || lang === "hi" ? "राजस्थान" : "Rajasthan"}</option>
                   </select>
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
-                    Card Theme Color / कार्ड का रंग
+                    {lang === "mr" ? "कार्ड थीम रंग" : lang === "hi" ? "कार्ड थीम रंग" : "Card Theme Color"}
                   </label>
                   <select
                     name="cardColor"
@@ -534,19 +566,19 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
                     onChange={handleInputChange}
                     className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-sm font-bold text-slate-700 bg-white"
                   >
-                    <option value="default">Default / राज्य आधारित</option>
-                    <option value="green">Green / हरा</option>
-                    <option value="blue">Blue / नीला</option>
-                    <option value="orange">Orange / नारंगी</option>
-                    <option value="red">Red / लाल</option>
-                    <option value="purple">Purple / बैंगनी</option>
+                    <option value="default">{lang === "mr" ? "मूळ / राज्य आधारित" : lang === "hi" ? "डिफ़ॉल्ट / राज्य आधारित" : "Default"}</option>
+                    <option value="green">{lang === "mr" || lang === "hi" ? "हरा" : "Green"}</option>
+                    <option value="blue">{lang === "mr" || lang === "hi" ? "नीला" : "Blue"}</option>
+                    <option value="orange">{lang === "mr" || lang === "hi" ? "नारंगी" : "Orange"}</option>
+                    <option value="red">{lang === "mr" || lang === "hi" ? "लाल" : "Red"}</option>
+                    <option value="purple">{lang === "mr" || lang === "hi" ? "बैंगनी" : "Purple"}</option>
                   </select>
                 </div>
               </div>
 
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
-                  Farmer ID / किसान आईडी
+                  {lang === "mr" ? "शेतकरी आयडी" : lang === "hi" ? "किसान आईडी" : "Farmer ID"}
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -562,7 +594,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
                     onClick={generateRandomFarmerId}
                     className="px-4 bg-slate-100 border border-slate-200 text-slate-600 rounded-xl text-xs font-black hover:bg-slate-200 transition-colors uppercase tracking-wider cursor-pointer"
                   >
-                    Regen
+                    {lang === "mr" ? "पुन्हा बनवा" : lang === "hi" ? "पुनः बनाएं" : "Regen"}
                   </button>
                 </div>
               </div>
@@ -571,28 +603,28 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
-                    Name (Hindi) / नाम (हिंदी)
+                    {translations[lang].nameLocal}
                   </label>
                   <input
                     type="text"
                     name="nameHindi"
                     value={formData.nameHindi}
                     onChange={handleInputChange}
-                    placeholder="उदा: आदित्य जगताप"
+                    placeholder={translations[lang].nameLocalPlaceholder}
                     className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-sm font-bold text-slate-700"
                   />
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
-                    Name (English) / नाम (अंग्रेजी)
+                    {translations[lang].nameEng}
                   </label>
                   <input
                     type="text"
                     name="nameEnglish"
                     value={formData.nameEnglish}
                     onChange={handleInputChange}
-                    placeholder="Ex: ADITYA JAGTAP"
+                    placeholder={translations[lang].nameEngPlaceholder}
                     className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-sm font-bold text-slate-700 uppercase"
                   />
                 </div>
@@ -602,7 +634,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
-                    Date of Birth / जन्म तिथि
+                    {lang === "mr" ? "जन्म तारीख" : lang === "hi" ? "जन्म तिथि" : "Date of Birth"}
                   </label>
                   <input
                     type="date"
@@ -630,7 +662,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
-                    Gender / लिंग
+                    {translations[lang].gender}
                   </label>
                   <select
                     name="gender"
@@ -638,15 +670,15 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
                     onChange={handleInputChange}
                     className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-sm font-bold text-slate-700 bg-white"
                   >
-                    <option value="Male">Male / पुरुष</option>
-                    <option value="Female">Female / महिला</option>
-                    <option value="Other">Other / अन्य</option>
+                    <option value="Male">{lang === "mr" ? "पुरुष" : lang === "hi" ? "पुरुष" : "Male"}</option>
+                    <option value="Female">{lang === "mr" ? "महिला" : lang === "hi" ? "महिला" : "Female"}</option>
+                    <option value="Other">{lang === "mr" ? "इतर" : lang === "hi" ? "अन्य" : "Other"}</option>
                   </select>
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
-                    Aadhaar Number / आधार संख्या
+                    {translations[lang].aadhaar}
                   </label>
                   <input
                     type="text"
@@ -654,14 +686,14 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
                     maxLength={12}
                     value={formData.aadhaar}
                     onChange={(e) => setFormData(prev => ({ ...prev, aadhaar: e.target.value.replace(/\D/g, "") }))}
-                    placeholder="12 Digit Aadhaar"
+                    placeholder={translations[lang].aadhaarPlaceholder}
                     className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-sm font-bold text-slate-700"
                   />
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
-                    Mobile Number / मोबाइल
+                    {translations[lang].mobile}
                   </label>
                   <input
                     type="text"
@@ -669,7 +701,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
                     maxLength={10}
                     value={formData.mobile}
                     onChange={(e) => setFormData(prev => ({ ...prev, mobile: e.target.value.replace(/\D/g, "") }))}
-                    placeholder="10 Digit Mobile"
+                    placeholder={translations[lang].mobilePlaceholder}
                     className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-sm font-bold text-slate-700"
                   />
                 </div>
@@ -681,7 +713,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
             <div className="space-y-5 animate-in fade-in slide-in-from-right duration-200">
               <div className="border-b pb-2 border-slate-100">
                 <h3 className="text-sm font-extrabold text-slate-700 uppercase tracking-wider">
-                  Photo & Address / फोटो और पता
+                  {lang === "mr" ? "फोटो आणि पत्ता" : lang === "hi" ? "फोटो और पता" : "Photo & Address"}
                 </h3>
               </div>
 
@@ -698,7 +730,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
                 </div>
                 <div className="md:col-span-8 space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
-                    Upload Portrait / फोटो अपलोड करें
+                    {translations[lang].photo}
                   </label>
                   <input
                     type="file"
@@ -707,21 +739,21 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
                     className="w-full text-xs font-bold text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-[#064e3b] file:text-white hover:file:bg-[#085a44] file:cursor-pointer transition-colors"
                   />
                   <p className="text-[10px] font-semibold text-slate-400 leading-tight">
-                    Recommended: 3:4 aspect ratio passport size. Background processing mirrors uploads.
+                    {translations[lang].photoHelp}
                   </p>
                 </div>
               </div>
 
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
-                  Permanent Address / स्थायी पता
+                  {lang === "mr" ? "कायमचा पत्ता" : lang === "hi" ? "स्थायी पता" : "Permanent Address"}
                 </label>
                 <textarea
                   name="address"
                   rows={4}
                   value={formData.address}
                   onChange={handleInputChange}
-                  placeholder="Enter Full Address"
+                  placeholder={lang === "mr" ? "पूर्ण पत्ता टाका..." : lang === "hi" ? "पूरा पता दर्ज करें..." : "Enter Full Address"}
                   className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-sm font-bold text-slate-700 resize-none"
                 />
               </div>
@@ -732,14 +764,14 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
             <div className="space-y-5 animate-in fade-in slide-in-from-right duration-200">
               <div className="border-b pb-2 border-slate-100 flex justify-between items-center">
                 <h3 className="text-sm font-extrabold text-slate-700 uppercase tracking-wider">
-                  Land Records / भूमि का विवरण (Max 8)
+                  {lang === "mr" ? "जमिनीचा तपशील" : lang === "hi" ? "भूमि का विवरण" : "Land Records"} (Max 8)
                 </h3>
                 <button
                   type="button"
                   onClick={addLandRow}
                   className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors flex items-center gap-1 cursor-pointer hover-scale"
                 >
-                  <Plus className="w-3.5 h-3.5" /> Add Plot
+                  <Plus className="w-3.5 h-3.5" /> {lang === "mr" ? "प्लॉट जोडा" : lang === "hi" ? "प्लॉट जोड़ें" : "Add Plot"}
                 </button>
               </div>
 
@@ -760,7 +792,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pr-6">
                       <div className="space-y-1">
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
-                          District
+                          {translations[lang].district}
                         </label>
                         <select
                           value={land.district}
@@ -775,7 +807,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
 
                       <div className="space-y-1">
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
-                          Sub-District
+                          {lang === "mr" ? "तालुका" : lang === "hi" ? "तहसील / तालुका" : "Sub-District"}
                         </label>
                         <input
                           type="text"
@@ -788,7 +820,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
 
                       <div className="space-y-1">
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
-                          Village
+                          {translations[lang].village}
                         </label>
                         <input
                           type="text"
@@ -801,7 +833,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
 
                       <div className="space-y-1">
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
-                          Khata (Owner No.)
+                          {lang === "mr" ? "खातेदार क्रमांक" : lang === "hi" ? "खाता संख्या" : "Khata (Owner No.)"}
                         </label>
                         <input
                           type="text"
@@ -814,7 +846,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
 
                       <div className="space-y-1">
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
-                          Khasra (Plot)
+                          {lang === "mr" ? "खसरा / गट क्रमांक" : lang === "hi" ? "खसरा संख्या" : "Khasra (Plot)"}
                         </label>
                         <input
                           type="text"
@@ -827,7 +859,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
 
                       <div className="space-y-1">
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
-                          Area
+                          {translations[lang].area}
                         </label>
                         <input
                           type="text"
@@ -850,7 +882,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
           <div className="bg-white border border-slate-200 border-l-4 border-l-emerald-600 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm no-print">
             <div className="border-b pb-3 mb-5 flex justify-between items-center">
               <h3 className="text-base font-extrabold text-slate-800 uppercase tracking-wider">
-                Live Card Preview / पूर्वावलोकन
+                {lang === "mr" ? "थेट ओळखपत्र पूर्वावलोकन" : lang === "hi" ? "लाइव कार्ड पूर्वावलोकन" : "Live Card Preview"}
               </h3>
               <span className="text-[10px] px-2.5 py-1 bg-emerald-50 border border-emerald-100 rounded-full font-black text-emerald-800 uppercase tracking-wider">
                 Card size: 600px x 380px
@@ -864,7 +896,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
           {/* Document Operations Controls Panel */}
           <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xs space-y-4 no-print">
             <h4 className="text-xs font-black uppercase text-slate-400 tracking-widest">
-              Action Desk / कार्रवाई पैनल
+              {lang === "mr" ? "कारवाई पॅनेल" : lang === "hi" ? "कार्रवाई पैनल" : "Action Desk"}
             </h4>
             <div className="grid grid-cols-3 gap-2 sm:gap-4">
               <button
@@ -872,7 +904,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
                 onClick={() => handleAction("save")}
                 className="py-2.5 sm:py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[10px] sm:text-xs font-black rounded-xl uppercase tracking-wider transition-all flex items-center justify-center gap-1 sm:gap-1.5 shadow-sm cursor-pointer border border-slate-200"
               >
-                <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Save</span><span className="sm:hidden">Save</span>
+                <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>{lang === "mr" ? "जतन करा" : lang === "hi" ? "सहेजें" : "Save"}</span>
               </button>
 
               <button
@@ -880,7 +912,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
                 onClick={() => handleAction("pdf")}
                 className="py-2.5 sm:py-3 bg-emerald-800 hover:bg-emerald-900 text-white text-[10px] sm:text-xs font-black rounded-xl uppercase tracking-wider transition-all flex items-center justify-center gap-1 sm:gap-1.5 shadow-md cursor-pointer"
               >
-                <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#cddc39]" /> PDF
+                <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#cddc39]" /> <span>PDF</span>
               </button>
 
               <button
@@ -888,7 +920,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
                 onClick={() => handleAction("print")}
                 className="py-2.5 sm:py-3 bg-[#064e3b] hover:bg-[#085a44] text-white text-[10px] sm:text-xs font-black rounded-xl uppercase tracking-wider transition-all flex items-center justify-center gap-1 sm:gap-1.5 shadow-md cursor-pointer"
               >
-                <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Print
+                <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>{lang === "mr" ? "प्रिंट करा" : lang === "hi" ? "प्रिंट" : "Print"}</span>
               </button>
             </div>
             
@@ -896,14 +928,119 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2.5 text-amber-950 text-xs font-bold leading-relaxed">
                 <CreditCard className="w-5 h-5 text-amber-800 shrink-0 mt-0.5" />
                 <div>
-                  <p>Wallet balance is 0. Generative printing costs 1 credit (₹15).</p>
-                  <p className="text-[10px] text-slate-400 font-bold mt-1">Payment is processed securely via Cashfree Gateway.</p>
+                  <p>{lang === "mr" ? "तुमचे वॉलेट क्रेडिट 0 आहे. ओळखपत्र प्रिंट करण्यासाठी 1 क्रेडिट (₹15) लागेल." : lang === "hi" ? "आपका वॉलेट बैलेंस 0 है। आईडी कार्ड प्रिंट करने के लिए 1 क्रेडिट (₹15) खर्च होता है।" : "Wallet balance is 0. Generative printing costs 1 credit (₹15)."}</p>
+                  <p className="text-[10px] text-slate-400 font-bold mt-1">{lang === "mr" ? "पेमेंट प्रक्रिया सुरक्षितपणे पूर्ण केली जाते." : lang === "hi" ? "भुगतान सुरक्षित रूप से संसाधित किया जाता है।" : "Payment is processed securely via Cashfree Gateway."}</p>
                 </div>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Help Video Guides Section */}
+      <div className="mt-12 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm no-print">
+        <div className="border-b pb-4 mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+          <div className="flex items-center gap-3">
+            <div className="bg-emerald-100 p-2.5 rounded-2xl text-emerald-800">
+              <Video className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-black text-slate-800 uppercase tracking-wider">
+                Video Help Guides / वीडियो सहायता गाइड
+              </h3>
+              <p className="text-xs text-slate-400 font-bold">
+                Learn how to log in, recharge your wallet, and create professional ID cards step-by-step.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Card 1: Login & Recharge */}
+          <div className="border border-slate-100 bg-slate-50/50 rounded-2xl p-5 flex flex-col justify-between gap-4 transition-all hover:shadow-md hover:border-emerald-100">
+            <div className="space-y-2">
+              <span className="text-[9px] px-2.5 py-1 bg-emerald-50 border border-emerald-100 rounded-full font-black text-emerald-800 uppercase tracking-wider">
+                Guide 1
+              </span>
+              <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider mt-2">
+                Account Login / Creation & Wallet Recharge Guide
+              </h4>
+              <p className="text-xs text-slate-500 font-bold leading-relaxed">
+                यह वीडियो गाइड आपको दिखाएगी कि गूगल से कैसे लॉगिन करें, नया अकाउंट कैसे सेटअप करें, और वॉलेट में सुरक्षित रूप से क्रेडिट कैसे जोड़ें।
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveVideoGuide("login")}
+              className="cursor-pointer w-full py-3 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-black rounded-xl uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md"
+            >
+              <Play className="w-4 h-4 text-[#cddc39] fill-[#cddc39]" /> Watch Video / वीडियो देखें
+            </button>
+          </div>
+
+          {/* Card 2: Farmer ID Creation */}
+          <div className="border border-slate-100 bg-slate-50/50 rounded-2xl p-5 flex flex-col justify-between gap-4 transition-all hover:shadow-md hover:border-emerald-100">
+            <div className="space-y-2">
+              <span className="text-[9px] px-2.5 py-1 bg-emerald-50 border border-emerald-100 rounded-full font-black text-emerald-800 uppercase tracking-wider">
+                Guide 2
+              </span>
+              <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider mt-2">
+                Farmer ID Card Creation & Printing Guide
+              </h4>
+              <p className="text-xs text-slate-500 font-bold leading-relaxed">
+                यह वीडियो आपको फार्म भरने की प्रक्रिया, भूमि विवरण (land details) जोड़ने, कार्ड का रंग बदलने, और कार्ड को पीडीएफ/प्रिंट करने की पूरी जानकारी देगा।
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveVideoGuide("creation")}
+              className="cursor-pointer w-full py-3 bg-[#064e3b] hover:bg-[#085a44] text-white text-xs font-black rounded-xl uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md"
+            >
+              <Play className="w-4 h-4 text-[#cddc39] fill-[#cddc39]" /> Watch Video / वीडियो देखें
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Video Guide Modal */}
+      {activeVideoGuide && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-[9999] no-print animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 max-w-4xl w-full flex flex-col gap-4 relative animate-in fade-in zoom-in duration-200">
+            <button
+              onClick={() => setActiveVideoGuide(null)}
+              className="absolute top-4 right-4 text-slate-500 hover:text-slate-800 transition-colors p-1 bg-slate-100 hover:bg-slate-200 rounded-full"
+            >
+              <Plus className="w-6 h-6 rotate-45" />
+            </button>
+            <h3 className="text-base font-black text-slate-800 uppercase tracking-wider border-b pb-3">
+              {activeVideoGuide === "login"
+                ? "Account Login/Creation & Recharge Guide / लॉगिन और रिचार्ज वीडियो गाइड"
+                : "Farmer ID Card Creation Guide / कार्ड बनाने की वीडियो गाइड"}
+            </h3>
+            <div className="aspect-video w-full rounded-2xl overflow-hidden border border-slate-200 bg-slate-950">
+              <iframe
+                src={
+                  activeVideoGuide === "login"
+                    ? "https://drive.google.com/file/d/1SwrPj9G6dOPqY8BDuOn3cMJ8FRcsXJgd/preview"
+                    : "https://drive.google.com/file/d/1zJHw6uyXLqMNV8E8lYeqmnHvLxHPiiAp/preview"
+                }
+                className="w-full h-full"
+                allow="autoplay; encrypted-media"
+                allowFullScreen
+              ></iframe>
+            </div>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setActiveVideoGuide(null)}
+                className="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-black rounded-xl uppercase tracking-wider transition-all"
+              >
+                Close / बंद करें
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Printable Only Card wrapper */}
       <div className="hidden print-only">

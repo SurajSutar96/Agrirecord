@@ -8,11 +8,19 @@ import PolicyPage from "./pages/PolicyPage";
 import { RechargeModal, ProfileModal } from "./components/Modals";
 import { Landmark, HelpCircle, Mail, ShieldAlert, FileText, Truck, RotateCcw, CreditCard } from "lucide-react";
 import { auth, googleProvider, signInWithPopup } from "./firebase";
+import { ToastContainer } from "./components/Toast";
+
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [rechargeOpen, setRechargeOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [lang, setLang] = useState(localStorage.getItem("agri_record_lang") || "en");
+
+  const handleSetLang = (newLang) => {
+    localStorage.setItem("agri_record_lang", newLang);
+    setLang(newLang);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("agri_record_token");
@@ -48,7 +56,7 @@ export default function App() {
     } catch (err) {
       console.error("Google Sign-In Error:", err);
       if (err.code !== "auth/popup-closed-by-user") {
-        alert(err.message || "Google Sign-In failed. Please try again.");
+        window.showToast(err.message || "Google Sign-In failed. Please try again.", "error");
       }
     }
   };
@@ -145,6 +153,8 @@ export default function App() {
           onOpenLogin={handleGoogleLogin} 
           onOpenRecharge={() => setRechargeOpen(true)}
           onOpenProfile={() => setProfileOpen(true)}
+          lang={lang}
+          onSetLang={handleSetLang}
         />
 
         {/* Dynamic Route Pages */}
@@ -158,12 +168,13 @@ export default function App() {
                   onAuthSuccess={handleAuthSuccess} 
                   onUpdateCredits={handleUpdateCredits} 
                   onOpenRecharge={() => setRechargeOpen(true)}
+                  lang={lang}
                 />
               } 
             />
             <Route 
               path="/my-cards" 
-              element={<Dashboard user={user} />} 
+              element={<Dashboard user={user} lang={lang} />} 
             />
             <Route 
               path="/admin" 
@@ -225,6 +236,7 @@ export default function App() {
           onClose={() => setRechargeOpen(false)} 
           user={user} 
           onUpdateCredits={handleUpdateCredits}
+          lang={lang}
         />
 
         {/* Profile Settings Modal */}
@@ -235,6 +247,30 @@ export default function App() {
           onUpdateUser={(updatedUser) => setUser(updatedUser)}
         />
 
+        {/* Global Toast Notifications */}
+        <ToastContainer />
+
+
+        {/* Floating WhatsApp Support Widget */}
+        <div className="fixed bottom-6 right-6 z-[999] flex flex-col items-center gap-1.5 no-print select-none">
+          <a
+            href={`https://wa.me/918788900807?text=${encodeURIComponent(
+              `Hi Aditya, I need support / assistance on AgriRecordPro. Registered details - Name: ${user?.name || 'Farmer'}, Mobile: ${user?.mobile || 'N/A'}.`
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#25D366] hover:bg-[#20ba59] hover:scale-110 shadow-lg text-white flex items-center justify-center transition-all duration-300 cursor-pointer"
+            title="Chat with support on WhatsApp"
+          >
+            <svg className="w-6.5 h-6.5 sm:w-7.5 sm:h-7.5 fill-current" viewBox="0 0 24 24">
+              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.488 1.459 5.416 1.46 5.561 0 10.088-4.526 10.091-10.087.001-2.693-1.045-5.225-2.946-7.128C17.3 1.503 14.77 1.459 12.008 1.459c-5.564 0-10.09 4.526-10.094 10.088-.002 1.902.501 3.762 1.458 5.378L1.879 21.62l4.768-1.258L6.647 19.16z"/>
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004"/>
+            </svg>
+          </a>
+          <span className="text-[10px] sm:text-xs font-black text-slate-500 bg-white/90 backdrop-blur-xs px-2.5 py-0.5 rounded-full border border-slate-100 shadow-md uppercase tracking-widest leading-none text-center">
+            Support
+          </span>
+        </div>
 
       </div>
     </Router>

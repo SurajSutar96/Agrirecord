@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Wallet, LogIn, LogOut, UserCheck, Shield, Menu, X } from "lucide-react";
+import { Wallet, LogIn, LogOut, UserCheck, Shield, Menu, X, Globe } from "lucide-react";
+import { translations } from "../translations";
 
-export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge, onOpenProfile }) {
+export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge, onOpenProfile, lang, onSetLang }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -39,7 +40,7 @@ export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge, on
                 location.pathname === "/" ? "bg-emerald-800/10 text-emerald-800 shadow-xs" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
               }`}
             >
-              Generator / जेनरेटर
+              {translations[lang].home}
             </Link>
             {user && (
               <Link
@@ -48,7 +49,7 @@ export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge, on
                   location.pathname === "/my-cards" ? "bg-emerald-800/10 text-emerald-800 shadow-xs" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
                 }`}
               >
-                My Cards / मेरे कार्ड
+                {translations[lang].myCards}
               </Link>
             )}
             {user && user.role === "Admin" && (
@@ -58,13 +59,27 @@ export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge, on
                   location.pathname === "/admin" ? "bg-purple-800/10 text-purple-800 shadow-xs" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
                 }`}
               >
-                <Shield className="w-3.5 h-3.5 text-purple-600" /> Admin Dashboard
+                <Shield className="w-3.5 h-3.5 text-purple-600" /> {translations[lang].adminPanel}
               </Link>
             )}
           </nav>
 
           {/* User Auth Action Items */}
           <div className="flex items-center gap-3">
+            {/* Language Selector Dropdown */}
+            <div className="relative flex items-center select-none no-print">
+              <select
+                value={lang}
+                onChange={(e) => onSetLang(e.target.value)}
+                className="bg-white/80 border border-slate-200 rounded-xl pl-2.5 pr-6 py-1.5 text-xs font-black text-slate-700 outline-none cursor-pointer focus:ring-4 focus:ring-emerald-100 hover:bg-slate-50 transition-all appearance-none"
+              >
+                <option value="en">EN</option>
+                <option value="hi">हिन्दी</option>
+                <option value="mr">मराठी</option>
+              </select>
+              <Globe className="w-3.5 h-3.5 text-slate-400 absolute right-2 pointer-events-none" />
+            </div>
+
             {user ? (
               <>
                 {/* Wallet Balance Display */}
@@ -74,7 +89,7 @@ export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge, on
                   className="bg-emerald-800/10 border border-emerald-800/20 rounded-xl sm:rounded-2xl px-2 sm:px-3.5 py-1.5 sm:py-2 flex items-center gap-1 sm:gap-1.5 text-emerald-950 font-extrabold text-[10px] sm:text-xs shadow-xs hover-scale cursor-pointer hover:bg-emerald-800/20 transition-all"
                 >
                   <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-700" />
-                  <span className="hidden sm:inline">Wallet: {user.role === "Admin" ? "Unlimited" : `${user.freeCredits} Cr`}</span>
+                  <span className="hidden sm:inline">{translations[lang].wallet}: {user.role === "Admin" ? "Unlimited" : `${user.freeCredits} Cr`}</span>
                   <span className="sm:hidden">{user.role === "Admin" ? "∞" : user.freeCredits}</span>
                 </div>
 
@@ -96,7 +111,7 @@ export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge, on
                   className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 border border-slate-200 rounded-xl sm:rounded-2xl hover:bg-red-50 hover:text-red-600 text-slate-600 font-bold text-xs transition-all cursor-pointer hover:border-red-100"
                 >
                   <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Logout</span>
+                  <span className="hidden sm:inline">{translations[lang].logout}</span>
                 </button>
               </>
             ) : (
@@ -105,7 +120,7 @@ export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge, on
                 className="flex items-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 bg-[#064e3b] hover:bg-[#085a44] text-white font-black text-[10px] sm:text-xs uppercase tracking-wider sm:tracking-widest rounded-xl sm:rounded-2xl transition-all shadow-md hover-scale cursor-pointer"
               >
                 <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                <span>Sign In</span>
+                <span>{translations[lang].login}</span>
               </button>
             )}
 
@@ -129,7 +144,7 @@ export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge, on
                 location.pathname === "/" ? "bg-emerald-800/10 text-emerald-800 shadow-xs" : "text-slate-500 hover:text-slate-700"
               }`}
             >
-              Generator / जेनरेटर
+              {translations[lang].home}
             </Link>
             {user && (
               <Link
@@ -139,7 +154,7 @@ export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge, on
                   location.pathname === "/my-cards" ? "bg-emerald-800/10 text-emerald-800 shadow-xs" : "text-slate-500 hover:text-slate-700"
                 }`}
               >
-                My Cards / मेरे कार्ड
+                {translations[lang].myCards}
               </Link>
             )}
             {user && (
@@ -150,7 +165,7 @@ export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge, on
                 }}
                 className="text-xs uppercase tracking-wider font-extrabold px-4 py-2.5 rounded-xl text-left text-slate-500 hover:text-slate-700 cursor-pointer"
               >
-                Profile / प्रोफाइल {user.mobile ? `(${user.mobile})` : "(Add Phone)"}
+                {translations[lang].profile} {user.mobile ? `(${user.mobile})` : "(Add Phone)"}
               </button>
             )}
             {user && user.role === "Admin" && (
@@ -161,7 +176,7 @@ export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge, on
                   location.pathname === "/admin" ? "bg-purple-800/10 text-purple-800 shadow-xs" : "text-slate-500 hover:text-slate-700"
                 }`}
               >
-                <Shield className="w-3.5 h-3.5 text-purple-600" /> Admin Dashboard
+                <Shield className="w-3.5 h-3.5 text-purple-600" /> {translations[lang].adminPanel}
               </Link>
             )}
           </div>

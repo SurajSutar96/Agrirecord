@@ -98,3 +98,19 @@ class AdminAddUser(BaseModel):
     role: Optional[str] = "User"
     credits: Optional[int] = 0
 
+class RazorpayVerifyPayload(BaseModel):
+    razorpay_payment_id: str
+    razorpay_order_id: str
+    razorpay_signature: str
+
+
+class GlobalSettingsUpdate(BaseModel):
+    credit_price: float
+    pkg_basic_price: float
+    pkg_silver_price: float
+    pkg_gold_price: float
+    support_phone: str
+    support_message: str
+
+
+

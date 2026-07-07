@@ -9,17 +9,46 @@ export default function AdminPanel({ user, onAuthSuccess }) {
   const [users, setUsers] = useState([]);
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState("overview"); // "overview", "users", or "cards"
+  const [tab, setTab] = useState("overview"); // "overview", "users", "cards", "logs", "settings"
   const [modifyingUserId, setModifyingUserId] = useState(null);
   const [modifyCreditsVal, setModifyCreditsVal] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+  const [txStatusFilter, setTxStatusFilter] = useState("ALL"); // "ALL", "PAID", "PENDING", "FAILED"
+  const [txPage, setTxPage] = useState(1);
+  const [usersPage, setUsersPage] = useState(1);
+  const [cardsPage, setCardsPage] = useState(1);
+
+  const [usersTotal, setUsersTotal] = useState(0);
+  const [cardsTotal, setCardsTotal] = useState(0);
+  const [txTotal, setTxTotal] = useState(0);
+  const [transactions, setTransactions] = useState([]);
+  const [adminLogs, setAdminLogs] = useState([]);
+  const [globalSettings, setGlobalSettings] = useState({
+    credit_price: 15.0,
+    pkg_basic_price: 150.0,
+    pkg_silver_price: 400.0,
+    pkg_gold_price: 1200.0,
+    support_phone: "+91 87889 00807",
+    support_message: "Hi Aditya, I am facing an issue with AgriRecord."
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
+
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setTxPage(1);
+    setUsersPage(1);
+    setCardsPage(1);
+  }, [tab, searchTerm, txStatusFilter]);
 
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalCards: 0,
     totalRevenue: 0,
     successRate: 100,
-    recentOrders: []
+    recentOrders: [],
+    revenueChartData: [],
+    cardsChartData: []
   });
 
   // Admin login states
@@ -64,13 +93,6 @@ export default function AdminPanel({ user, onAuthSuccess }) {
     }
   };
 
-
-  useEffect(() => {
-    if (user && user.role === "Admin") {
-      fetchAdminData();
-    }
-  }, [user, tab]);
-
   const fetchAdminData = async () => {
     setLoading(true);
     const token = localStorage.getItem("agri_record_token");
@@ -81,17 +103,38 @@ export default function AdminPanel({ user, onAuthSuccess }) {
         if (response.ok) {
           setStats(data);
         }
-      } else if (tab === "users") {
-        const response = await fetch(`/api/admin/users?token=${token}`);
-        const data = await response.json();
-        if (response.ok) {
-          setUsers(data);
+        
+        const txResponse = await fetch(`/api/admin/transactions?token=${token}&page=${txPage}&limit=${itemsPerPage}&status=${txStatusFilter}`);
+        const txData = await txResponse.json();
+        if (txResponse.ok) {
+          setTransactions(txData.items || []);
+          setTxTotal(txData.total || 0);
         }
-      } else {
-        const response = await fetch(`/api/admin/cards?token=${token}`);
+      } else if (tab === "users") {
+        const response = await fetch(`/api/admin/users?token=${token}&page=${usersPage}&limit=${itemsPerPage}&search=${searchTerm}`);
         const data = await response.json();
         if (response.ok) {
-          setCards(data);
+          setUsers(data.items || []);
+          setUsersTotal(data.total || 0);
+        }
+      } else if (tab === "cards") {
+        const response = await fetch(`/api/admin/cards?token=${token}&page=${cardsPage}&limit=${itemsPerPage}&search=${searchTerm}`);
+        const data = await response.json();
+        if (response.ok) {
+          setCards(data.items || []);
+          setCardsTotal(data.total || 0);
+        }
+      } else if (tab === "logs") {
+        const response = await fetch(`/api/admin/logs?token=${token}&limit=50`);
+        const data = await response.json();
+        if (response.ok) {
+          setAdminLogs(data || []);
+        }
+      } else if (tab === "settings") {
+        const response = await fetch(`/api/admin/settings?token=${token}`);
+        const data = await response.json();
+        if (response.ok) {
+          setGlobalSettings(data);
         }
       }
     } catch (err) {
@@ -100,6 +143,12 @@ export default function AdminPanel({ user, onAuthSuccess }) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (user && user.role === "Admin") {
+      fetchAdminData();
+    }
+  }, [user, tab, txPage, usersPage, cardsPage, txStatusFilter, searchTerm]);
 
   const handleUpdateCredits = async (userId) => {
     const token = localStorage.getItem("agri_record_token");
@@ -114,11 +163,11 @@ export default function AdminPanel({ user, onAuthSuccess }) {
       });
       const data = await response.json();
       if (response.ok) {
-        alert("Wallet credits updated successfully!");
+        window.showToast("Wallet credits updated successfully!", "success");
         setModifyingUserId(null);
         fetchAdminData();
       } else {
-        alert(data.detail || "Update failed");
+        window.showToast(data.detail || "Update failed", "error");
       }
     } catch (err) {
       console.error("Update credits error:", err);
@@ -138,10 +187,10 @@ export default function AdminPanel({ user, onAuthSuccess }) {
       });
       const data = await response.json();
       if (response.ok) {
-        alert("User role updated successfully!");
+        window.showToast("User role updated successfully!", "success");
         fetchAdminData();
       } else {
-        alert(data.detail || "Update failed");
+        window.showToast(data.detail || "Update failed", "error");
       }
     } catch (err) {
       console.error("Update role error:", err);
@@ -157,11 +206,11 @@ export default function AdminPanel({ user, onAuthSuccess }) {
         method: "DELETE",
       });
       if (response.ok) {
-        alert("Card record deleted successfully!");
+        window.showToast("Card record deleted successfully!", "success");
         fetchAdminData();
       } else {
         const data = await response.json();
-        alert(data.detail || "Delete failed");
+        window.showToast(data.detail || "Delete failed", "error");
       }
     } catch (err) {
       console.error("Delete card error:", err);
@@ -177,11 +226,11 @@ export default function AdminPanel({ user, onAuthSuccess }) {
         method: "DELETE",
       });
       if (response.ok) {
-        alert("User account deleted successfully!");
+        window.showToast("User account deleted successfully!", "success");
         fetchAdminData();
       } else {
         const data = await response.json();
-        alert(data.detail || "Delete failed");
+        window.showToast(data.detail || "Delete failed", "error");
       }
     } catch (err) {
       console.error("Delete user error:", err);
@@ -238,18 +287,75 @@ export default function AdminPanel({ user, onAuthSuccess }) {
   }
 
   // Filter helper logic
-  const filteredUsers = users.filter((u) => 
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    u.mobile.includes(searchTerm) || 
-    (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredUsers = users;
+  const filteredCards = cards;
+  const filteredTransactions = transactions;
 
-  const filteredCards = cards.filter((c) => 
-    c.nameEnglish.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    c.nameHindi.includes(searchTerm) || 
-    c.farmerId.includes(searchTerm) ||
-    c.mobile.includes(searchTerm)
-  );
+  const paginatedTransactions = transactions;
+  const paginatedUsers = users;
+  const paginatedCards = cards;
+
+  const exportToCSV = (data, headers, filename) => {
+    const csvRows = [];
+    csvRows.push(headers.join(","));
+    for (const row of data) {
+      const values = headers.map(header => {
+        const val = row[header] === undefined || row[header] === null ? "" : row[header];
+        const escaped = ("" + val).replace(/"/g, '""');
+        return `"${escaped}"`;
+      });
+      csvRows.push(values.join(","));
+    }
+    const csvContent = "data:text/csv;charset=utf-8," + csvRows.map(e => encodeURIComponent(e)).join("\n");
+    const link = document.createElement("a");
+    link.setAttribute("href", csvContent);
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportTransactions = async () => {
+    const token = localStorage.getItem("agri_record_token");
+    try {
+      const res = await fetch(`/api/admin/transactions?token=${token}&page=1&limit=5000&status=${txStatusFilter}`);
+      const data = await res.json();
+      if (res.ok && data.items) {
+        exportToCSV(data.items, ["order_id", "customer_name", "customer_phone", "package_id", "amount", "status", "createdAt"], "transactions_report.csv");
+      }
+    } catch (e) {
+      console.error(e);
+      window.showToast("Failed to export transactions", "error");
+    }
+  };
+
+  const handleExportUsers = async () => {
+    const token = localStorage.getItem("agri_record_token");
+    try {
+      const res = await fetch(`/api/admin/users?token=${token}&page=1&limit=5000&search=${searchTerm}`);
+      const data = await res.json();
+      if (res.ok && data.items) {
+        exportToCSV(data.items, ["id", "name", "mobile", "email", "role", "freeCredits"], "users_report.csv");
+      }
+    } catch (e) {
+      console.error(e);
+      window.showToast("Failed to export users", "error");
+    }
+  };
+
+  const handleExportCards = async () => {
+    const token = localStorage.getItem("agri_record_token");
+    try {
+      const res = await fetch(`/api/admin/cards?token=${token}&page=1&limit=5000&search=${searchTerm}`);
+      const data = await res.json();
+      if (res.ok && data.items) {
+        exportToCSV(data.items, ["farmerId", "nameEnglish", "nameHindi", "dob", "gender", "mobile", "aadhaar", "state", "downloadDate"], "cards_report.csv");
+      }
+    } catch (e) {
+      console.error(e);
+      window.showToast("Failed to export cards", "error");
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 no-print transition-all duration-300">
@@ -268,7 +374,7 @@ export default function AdminPanel({ user, onAuthSuccess }) {
       </div>
 
       {/* Tabs list navigation */}
-      <div className="flex border-b border-slate-200 mb-6 gap-2 select-none">
+      <div className="flex border-b border-slate-200 mb-6 gap-2 select-none flex-wrap">
         <button
           onClick={() => { setTab("overview"); setSearchTerm(""); }}
           className={`pb-3 px-5 text-xs font-black uppercase tracking-widest transition-colors border-b-3 flex items-center gap-2 cursor-pointer ${
@@ -283,7 +389,7 @@ export default function AdminPanel({ user, onAuthSuccess }) {
             tab === "users" ? "border-emerald-800 text-emerald-800" : "border-transparent text-slate-400 hover:text-slate-600"
           }`}
         >
-          <Users className="w-4 h-4" /> Users ({users.length > 0 ? users.length : stats.totalUsers})
+          <Users className="w-4 h-4" /> Users ({usersTotal > 0 ? usersTotal : stats.totalUsers})
         </button>
         <button
           onClick={() => { setTab("cards"); setSearchTerm(""); }}
@@ -291,7 +397,23 @@ export default function AdminPanel({ user, onAuthSuccess }) {
             tab === "cards" ? "border-emerald-800 text-emerald-800" : "border-transparent text-slate-400 hover:text-slate-600"
           }`}
         >
-          <Landmark className="w-4 h-4" /> Generated Cards ({cards.length > 0 ? cards.length : stats.totalCards})
+          <Landmark className="w-4 h-4" /> Generated Cards ({cardsTotal > 0 ? cardsTotal : stats.totalCards})
+        </button>
+        <button
+          onClick={() => { setTab("logs"); setSearchTerm(""); }}
+          className={`pb-3 px-5 text-xs font-black uppercase tracking-widest transition-colors border-b-3 flex items-center gap-2 cursor-pointer ${
+            tab === "logs" ? "border-emerald-800 text-emerald-800" : "border-transparent text-slate-400 hover:text-slate-600"
+          }`}
+        >
+          <Shield className="w-4 h-4" /> Activity Logs
+        </button>
+        <button
+          onClick={() => { setTab("settings"); setSearchTerm(""); }}
+          className={`pb-3 px-5 text-xs font-black uppercase tracking-widest transition-colors border-b-3 flex items-center gap-2 cursor-pointer ${
+            tab === "settings" ? "border-emerald-800 text-emerald-800" : "border-transparent text-slate-400 hover:text-slate-600"
+          }`}
+        >
+          <Key className="w-4 h-4" /> System Settings
         </button>
       </div>
 
@@ -356,11 +478,45 @@ export default function AdminPanel({ user, onAuthSuccess }) {
             </div>
           </div>
 
+          {/* Analytics Charts Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <DailyRevenueChart data={stats.revenueChartData || []} />
+            <DailyCardsChart data={stats.cardsChartData || []} />
+          </div>
+
           {/* Recent Checkout logs table */}
           <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4">
-            <div>
-              <h3 className="text-lg font-black text-slate-800 uppercase tracking-wide">Recent Transactions Log</h3>
-              <p className="text-xs text-slate-400 font-semibold mt-0.5">Real-time payment logs generated via Cashfree checkout pipeline.</p>
+            <div className="flex justify-between items-center flex-wrap gap-4 border-b pb-4 border-slate-100">
+              <div>
+                <h3 className="text-lg font-black text-slate-800 uppercase tracking-wide">Recent Transactions Log</h3>
+                <p className="text-xs text-slate-400 font-semibold mt-0.5">Real-time payment logs generated via Cashfree checkout pipeline.</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleExportTransactions}
+                  className="px-3.5 py-2 bg-emerald-800 hover:bg-emerald-950 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-xs cursor-pointer hover-scale"
+                >
+                  Export CSV
+                </button>
+                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-2xs">
+                  {["ALL", "PAID", "PENDING", "FAILED"].map((status) => {
+                    const isActive = txStatusFilter === status;
+                    return (
+                      <button
+                        key={status}
+                        onClick={() => setTxStatusFilter(status)}
+                        className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                          isActive
+                            ? "bg-white text-slate-800 shadow-sm border border-slate-200/50"
+                            : "text-slate-400 hover:text-slate-650 border border-transparent"
+                        }`}
+                      >
+                        {status === "ALL" ? "All" : status.charAt(0) + status.slice(1).toLowerCase()}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
             
             <div className="overflow-x-auto rounded-2xl border border-slate-100">
@@ -376,8 +532,8 @@ export default function AdminPanel({ user, onAuthSuccess }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
-                  {stats.recentOrders.length > 0 ? (
-                    stats.recentOrders.map((o) => (
+                  {paginatedTransactions.length > 0 ? (
+                    paginatedTransactions.map((o) => (
                       <tr key={o.order_id} className="hover:bg-slate-50/50">
                         <td className="px-6 py-4 font-mono font-bold text-slate-500">{o.order_id}</td>
                         <td className="px-6 py-4">
@@ -386,8 +542,10 @@ export default function AdminPanel({ user, onAuthSuccess }) {
                             <span className="text-[10px] text-slate-400 mt-0.5">+91 {o.customer_phone}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-slate-500 font-extrabold uppercase text-[10px] tracking-wide">{o.package_id.replace(/_/g, " ")}</td>
-                        <td className="px-6 py-4 text-slate-900 font-black">₹{o.amount.toFixed(2)}</td>
+                        <td className="px-6 py-4 text-slate-500 font-extrabold uppercase text-[10px] tracking-wide">
+                          {o.package_id ? o.package_id.replace(/_/g, " ") : "Wallet Recharge"}
+                        </td>
+                        <td className="px-6 py-4 text-slate-900 font-black">₹{o.amount ? o.amount.toFixed(2) : "0.00"}</td>
                         <td className="px-6 py-4">
                           <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
                             o.status === "PAID" 
@@ -405,13 +563,20 @@ export default function AdminPanel({ user, onAuthSuccess }) {
                   ) : (
                     <tr>
                       <td colSpan="6" className="text-center py-8 text-slate-400 font-semibold">
-                        No transactions recorded yet in database.
+                        No transactions recorded for the selected status.
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
+
+            <Pagination
+              currentPage={txPage}
+              totalItems={txTotal}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setTxPage}
+            />
           </div>
         </div>
       ) : tab === "users" ? (
@@ -425,8 +590,8 @@ export default function AdminPanel({ user, onAuthSuccess }) {
           </div>
 
           {/* Users search controls */}
-          <div className="flex justify-between items-center gap-4 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-xs">
-            <div className="relative flex-1 max-w-md">
+          <div className="flex justify-between items-center gap-4 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-xs flex-wrap">
+            <div className="relative flex-1 min-w-[250px] max-w-md">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
                 <Search className="w-4 h-4" />
               </span>
@@ -438,8 +603,16 @@ export default function AdminPanel({ user, onAuthSuccess }) {
                 className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-xs font-bold text-slate-700"
               />
             </div>
-            <div className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
-              Displaying {filteredUsers.length} Users
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleExportUsers}
+                className="px-3.5 py-2 bg-emerald-800 hover:bg-emerald-950 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-xs cursor-pointer hover-scale"
+              >
+                Export CSV
+              </button>
+              <div className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                Total Users: {usersTotal}
+              </div>
             </div>
           </div>
 
@@ -456,8 +629,8 @@ export default function AdminPanel({ user, onAuthSuccess }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
-                  {filteredUsers.length > 0 ? (
-                    filteredUsers.map((u) => (
+                  {paginatedUsers.length > 0 ? (
+                    paginatedUsers.map((u) => (
                       <tr key={u.id} className="hover:bg-slate-50/50">
                         <td className="px-6 py-4">
                           <div className="flex flex-col">
@@ -545,13 +718,20 @@ export default function AdminPanel({ user, onAuthSuccess }) {
                 </tbody>
               </table>
             </div>
+
+            <Pagination
+              currentPage={usersPage}
+              totalItems={usersTotal}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setUsersPage}
+            />
           </div>
         </div>
-      ) : (
+      ) : tab === "cards" ? (
         <div className="space-y-6 animate-in fade-in duration-300">
           {/* Cards search controls */}
-          <div className="flex justify-between items-center gap-4 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-xs">
-            <div className="relative flex-1 max-w-md">
+          <div className="flex justify-between items-center gap-4 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-xs flex-wrap">
+            <div className="relative flex-1 min-w-[250px] max-w-md">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
                 <Search className="w-4 h-4" />
               </span>
@@ -563,8 +743,16 @@ export default function AdminPanel({ user, onAuthSuccess }) {
                 className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-xs font-bold text-slate-700"
               />
             </div>
-            <div className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
-              Displaying {filteredCards.length} Generated Cards
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleExportCards}
+                className="px-3.5 py-2 bg-emerald-800 hover:bg-emerald-950 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-xs cursor-pointer hover-scale"
+              >
+                Export CSV
+              </button>
+              <div className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                Total Cards: {cardsTotal}
+              </div>
             </div>
           </div>
 
@@ -583,8 +771,8 @@ export default function AdminPanel({ user, onAuthSuccess }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
-                  {filteredCards.length > 0 ? (
-                    filteredCards.map((c) => (
+                  {paginatedCards.length > 0 ? (
+                    paginatedCards.map((c) => (
                       <tr key={c.id} className="hover:bg-slate-50/50">
                         <td className="px-6 py-4 font-black text-slate-800">{c.farmerId}</td>
                         <td className="px-6 py-4">
@@ -627,9 +815,394 @@ export default function AdminPanel({ user, onAuthSuccess }) {
                 </tbody>
               </table>
             </div>
+
+            <Pagination
+              currentPage={cardsPage}
+              totalItems={cardsTotal}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCardsPage}
+            />
           </div>
+        </div>
+      ) : tab === "logs" ? (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          <div className="flex justify-between items-center bg-white border border-slate-200 rounded-2xl px-6 py-4 shadow-xs">
+            <div>
+              <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Administrative Activity Logs</h3>
+              <p className="text-xs font-semibold text-slate-400 mt-0.5">Audit trail of modifications, deletions, roles, and settings updates executed by administrators.</p>
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-xs font-black uppercase text-slate-500 tracking-wider">
+                    <th className="px-6 py-4">Timestamp</th>
+                    <th className="px-6 py-4">Admin Name</th>
+                    <th className="px-6 py-4">Action Type</th>
+                    <th className="px-6 py-4">Description</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
+                  {adminLogs.length > 0 ? (
+                    adminLogs.map((log) => (
+                      <tr key={log.id} className="hover:bg-slate-50/50">
+                        <td className="px-6 py-4 text-slate-400 font-mono">{log.timestamp}</td>
+                        <td className="px-6 py-4 text-slate-800 font-extrabold">{log.admin_name}</td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                            log.action_type === "UPDATE_SETTINGS"
+                              ? "bg-blue-50 text-blue-800 border border-blue-100"
+                              : log.action_type.startsWith("DELETE")
+                              ? "bg-red-50 text-red-800 border border-red-100"
+                              : "bg-amber-50 text-amber-800 border border-amber-100"
+                          }`}>
+                            {log.action_type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-slate-500 font-semibold">{log.description}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="4" className="text-center py-8 text-slate-400 font-semibold">
+                        No activity logs recorded yet.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-6 animate-in fade-in duration-300 max-w-3xl">
+          <div className="bg-white border border-slate-200 rounded-2xl px-6 py-4 shadow-xs">
+            <div>
+              <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">System Settings</h3>
+              <p className="text-xs font-semibold text-slate-400 mt-0.5">Configure billing prices, wallet credit conversion packages, and WhatsApp customer support messages.</p>
+            </div>
+          </div>
+
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setSavingSettings(true);
+              const token = localStorage.getItem("agri_record_token");
+              try {
+                const response = await fetch("/api/admin/settings", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                  },
+                  body: JSON.stringify({
+                    credit_price: Number(globalSettings.credit_price),
+                    pkg_basic_price: Number(globalSettings.pkg_basic_price),
+                    pkg_silver_price: Number(globalSettings.pkg_silver_price),
+                    pkg_gold_price: Number(globalSettings.pkg_gold_price),
+                    support_phone: globalSettings.support_phone,
+                    support_message: globalSettings.support_message
+                  })
+                });
+                const resData = await response.json();
+                if (response.ok) {
+                  window.showToast("System settings saved successfully!", "success");
+                } else {
+                  window.showToast(resData.detail || "Failed to save settings", "error");
+                }
+              } catch (err) {
+                console.error(err);
+                window.showToast("Failed to save settings", "error");
+              } finally {
+                setSavingSettings(false);
+              }
+            }}
+            className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Price Per Credit (₹)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={globalSettings.credit_price}
+                  onChange={(e) => setGlobalSettings({...globalSettings, credit_price: e.target.value})}
+                  className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 outline-none text-xs font-bold text-slate-700"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Basic Plan Price (₹10 credits)</label>
+                <input
+                  type="number"
+                  value={globalSettings.pkg_basic_price}
+                  onChange={(e) => setGlobalSettings({...globalSettings, pkg_basic_price: e.target.value})}
+                  className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 outline-none text-xs font-bold text-slate-700"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Silver Plan Price (₹30 credits)</label>
+                <input
+                  type="number"
+                  value={globalSettings.pkg_silver_price}
+                  onChange={(e) => setGlobalSettings({...globalSettings, pkg_silver_price: e.target.value})}
+                  className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 outline-none text-xs font-bold text-slate-700"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Gold Plan Price (₹100 credits)</label>
+                <input
+                  type="number"
+                  value={globalSettings.pkg_gold_price}
+                  onChange={(e) => setGlobalSettings({...globalSettings, pkg_gold_price: e.target.value})}
+                  className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 outline-none text-xs font-bold text-slate-700"
+                  required
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">WhatsApp Support Phone Number</label>
+                <input
+                  type="text"
+                  value={globalSettings.support_phone}
+                  onChange={(e) => setGlobalSettings({...globalSettings, support_phone: e.target.value})}
+                  className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 outline-none text-xs font-bold text-slate-700"
+                  required
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">WhatsApp Default Support Message</label>
+                <textarea
+                  rows="3"
+                  value={globalSettings.support_message}
+                  onChange={(e) => setGlobalSettings({...globalSettings, support_message: e.target.value})}
+                  className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 outline-none text-xs font-bold text-slate-700 resize-none"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <button
+                type="submit"
+                disabled={savingSettings}
+                className="px-6 py-3 bg-[#064e3b] hover:bg-[#085a44] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 hover-scale"
+              >
+                {savingSettings ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Save Configurations
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>
   );
 }
+
+const Pagination = ({ currentPage, totalItems, itemsPerPage, onPageChange }) => {
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="flex justify-between items-center px-6 py-4 bg-slate-50 border-t border-slate-100 rounded-b-3xl no-print select-none">
+      <div className="text-xs font-bold text-slate-500">
+        Showing {Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)}–{Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} records
+      </div>
+      <div className="flex gap-2">
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase tracking-wider text-slate-700 hover:bg-slate-50 transition-all disabled:opacity-50 cursor-pointer"
+        >
+          Prev
+        </button>
+        <div className="flex items-center gap-1.5">
+          {[...Array(totalPages)].map((_, i) => {
+            const pageNum = i + 1;
+            if (totalPages > 5 && Math.abs(pageNum - currentPage) > 2 && pageNum !== 1 && pageNum !== totalPages) {
+              if (pageNum === 2 || pageNum === totalPages - 1) {
+                return <span key={pageNum} className="text-slate-400 text-xs font-bold px-1">...</span>;
+              }
+              return null;
+            }
+            return (
+              <button
+                key={pageNum}
+                onClick={() => onPageChange(pageNum)}
+                className={`w-8 h-8 rounded-xl text-xs font-extrabold flex items-center justify-center transition-all cursor-pointer ${
+                  currentPage === pageNum
+                    ? "bg-[#064e3b] text-white shadow-sm"
+                    : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                {pageNum}
+              </button>
+            );
+          })}
+        </div>
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase tracking-wider text-slate-700 hover:bg-slate-50 transition-all disabled:opacity-50 cursor-pointer"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const DailyRevenueChart = ({ data }) => {
+  if (!data || data.length === 0) return null;
+  const maxAmount = Math.max(...data.map(d => d.amount), 1);
+  const chartHeight = 120;
+  const barWidth = 35;
+  const gap = 15;
+  const paddingLeft = 40;
+  const paddingTop = 20;
+  const totalWidth = data.length * (barWidth + gap) + paddingLeft;
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs animate-in fade-in duration-300">
+      <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">7-Day Revenue Trend (₹)</h4>
+      <div className="overflow-x-auto">
+        <svg width="100%" height={chartHeight + 50} viewBox={`0 0 ${totalWidth} ${chartHeight + 50}`} className="min-w-[320px]">
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
+            const y = paddingTop + (1 - ratio) * chartHeight;
+            return (
+              <g key={idx}>
+                <line x1={paddingLeft} y1={y} x2={totalWidth} y2={y} stroke="#f1f5f9" strokeWidth="1" />
+                <text x={paddingLeft - 8} y={y + 3} textAnchor="end" className="fill-slate-400 text-[9px] font-bold">
+                  ₹{Math.round(ratio * maxAmount)}
+                </text>
+              </g>
+            );
+          })}
+          
+          {data.map((d, index) => {
+            const barHeight = (d.amount / maxAmount) * chartHeight;
+            const x = paddingLeft + index * (barWidth + gap);
+            const y = chartHeight + paddingTop - barHeight;
+            const dateLabel = d.date.split("-").slice(1).join("/");
+            
+            return (
+              <g key={index} className="group cursor-pointer">
+                <rect
+                  x={x}
+                  y={y}
+                  width={barWidth}
+                  height={barHeight}
+                  fill="url(#emeraldGradient)"
+                  rx="6"
+                  className="transition-all duration-300 hover:fill-[#085a44]"
+                />
+                <text
+                  x={x + barWidth / 2}
+                  y={y - 6}
+                  textAnchor="middle"
+                  className="fill-emerald-800 text-[10px] font-black opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  ₹{d.amount}
+                </text>
+                <text
+                  x={x + barWidth / 2}
+                  y={chartHeight + paddingTop + 18}
+                  textAnchor="middle"
+                  className="fill-slate-400 text-[9px] font-bold"
+                >
+                  {dateLabel}
+                </text>
+              </g>
+            );
+          })}
+          
+          <defs>
+            <linearGradient id="emeraldGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#10b981" />
+              <stop offset="100%" stopColor="#047857" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+    </div>
+  );
+};
+
+const DailyCardsChart = ({ data }) => {
+  if (!data || data.length === 0) return null;
+  const maxCount = Math.max(...data.map(d => d.count), 1);
+  const chartHeight = 120;
+  const barWidth = 35;
+  const gap = 15;
+  const paddingLeft = 40;
+  const paddingTop = 20;
+  const totalWidth = data.length * (barWidth + gap) + paddingLeft;
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs animate-in fade-in duration-300">
+      <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">7-Day Card Volume Trend</h4>
+      <div className="overflow-x-auto">
+        <svg width="100%" height={chartHeight + 50} viewBox={`0 0 ${totalWidth} ${chartHeight + 50}`} className="min-w-[320px]">
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
+            const y = paddingTop + (1 - ratio) * chartHeight;
+            return (
+              <g key={idx}>
+                <line x1={paddingLeft} y1={y} x2={totalWidth} y2={y} stroke="#f1f5f9" strokeWidth="1" />
+                <text x={paddingLeft - 8} y={y + 3} textAnchor="end" className="fill-slate-400 text-[9px] font-bold">
+                  {Math.round(ratio * maxCount)}
+                </text>
+              </g>
+            );
+          })}
+          
+          {data.map((d, index) => {
+            const barHeight = (d.count / maxCount) * chartHeight;
+            const x = paddingLeft + index * (barWidth + gap);
+            const y = chartHeight + paddingTop - barHeight;
+            const dateLabel = d.date.split("-").slice(1).join("/");
+            
+            return (
+              <g key={index} className="group cursor-pointer">
+                <rect
+                  x={x}
+                  y={y}
+                  width={barWidth}
+                  height={barHeight}
+                  fill="url(#blueGradient)"
+                  rx="6"
+                  className="transition-all duration-300 hover:fill-blue-800"
+                />
+                <text
+                  x={x + barWidth / 2}
+                  y={y - 6}
+                  textAnchor="middle"
+                  className="fill-blue-800 text-[10px] font-black opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  {d.count}
+                </text>
+                <text
+                  x={x + barWidth / 2}
+                  y={chartHeight + paddingTop + 18}
+                  textAnchor="middle"
+                  className="fill-slate-400 text-[9px] font-bold"
+                >
+                  {dateLabel}
+                </text>
+              </g>
+            );
+          })}
+          
+          <defs>
+            <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#3b82f6" />
+              <stop offset="100%" stopColor="#1d4ed8" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+    </div>
+  );
+};

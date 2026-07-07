@@ -39,7 +39,7 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
     setError("");
     try {
       await sendPasswordResetEmail(auth, firebaseEmail);
-      alert(`Password reset link successfully sent to: ${firebaseEmail}`);
+      window.showToast(`Password reset link successfully sent to: ${firebaseEmail}`, "success");
     } catch (err) {
       let msg = err.message;
       if (err.code === "auth/user-not-found") {
@@ -97,7 +97,7 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
           throw new Error(data.detail || "Registration sync failed");
         }
 
-        alert("Registration successful! Please login.");
+        window.showToast("Registration successful! Please login.", "success");
         setPassword("");
         setMode("login");
       }
@@ -401,14 +401,118 @@ export const ContactModal = ({ isOpen, onClose }) => {
 };
 
 export const RechargeModal = ({ isOpen, onClose, user, onUpdateCredits }) => {
-  const [step, setStep] = useState("packages"); // "packages", "contact_admin"
   const [selectedPkg, setSelectedPkg] = useState({ id: "pkg_10_credits", name: "10 Credits (Starter Pack)", amount: 100, credits: 10 });
+  const [loading, setLoading] = useState(false);
 
   const packages = [
     { id: "pkg_1_credit", name: "1 Credit (Single Print)", amount: 15, credits: 1 },
     { id: "pkg_10_credits", name: "10 Credits (Starter Pack)", amount: 100, credits: 10, popular: true },
     { id: "pkg_50_credits", name: "50 Credits (Bulk Pack)", amount: 400, credits: 50 }
   ];
+
+  const handleOnlineRecharge = async () => {
+    if (!user) {
+      window.showToast("Please log in to purchase credits / कृपया रिचार्ज करने के लिए लॉगिन करें।", "warning");
+      return;
+    }
+    
+    setLoading(true);
+    const token = localStorage.getItem("agri_record_token");
+    
+    try {
+      const response = await fetch("/api/create-order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          customerId: user.id,
+          customerPhone: user.mobile || "9999999999",
+          customerName: user.name || "Farmer",
+          amount: selectedPkg.amount,
+          packageId: selectedPkg.id
+        })
+      });
+      
+      const orderData = await response.json();
+      if (!response.ok) {
+        throw new Error(orderData.detail || "Failed to create payment order");
+      }
+      
+      const keyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
+      if (!keyId) {
+        console.error("VITE_RAZORPAY_KEY_ID is not defined in frontend environment variables.");
+        window.showToast("Configuration Error: Razorpay Key ID (VITE_RAZORPAY_KEY_ID) is missing in frontend environment variables.", "error");
+        setLoading(false);
+        return;
+      }
+      
+      const options = {
+        key: keyId,
+        amount: orderData.amount, // in paise
+        currency: orderData.currency,
+        name: "AgriRecordPro",
+        description: `Purchase ${selectedPkg.credits} Credits`,
+        order_id: orderData.order_id,
+        handler: async function (response) {
+          try {
+            setLoading(true);
+            const verifyRes = await fetch("/api/verify-payment", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyRes.ok && verifyData.success) {
+              window.showToast(`Payment verified successfully! ${verifyData.credits} credits added to your wallet.`, "success");
+              onUpdateCredits(verifyData.credits);
+              onClose();
+            } else {
+              window.showToast("Payment verification failed: " + (verifyData.detail || "Unknown error"), "error");
+            }
+          } catch (err) {
+            console.error("Verification error:", err);
+            window.showToast("Verification failed: " + err.message, "error");
+          } finally {
+            setLoading(false);
+          }
+        },
+        prefill: {
+          name: user.name || "Farmer",
+          contact: user.mobile || "9999999999",
+          email: user.email || ""
+        },
+        theme: {
+          color: "#064e3b"
+        },
+        modal: {
+          ondismiss: function () {
+            window.showToast("Payment cancelled by user.", "warning");
+            setLoading(false);
+          }
+        }
+      };
+      
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", function (response) {
+        window.showToast("Payment failed: " + (response.error.description || "Unknown reason"), "error");
+        setLoading(false);
+      });
+      rzp.open();
+    } catch (err) {
+      console.error("Payment initiation failed:", err);
+      window.showToast("Failed to initiate payment: " + err.message, "error");
+      setLoading(false);
+    }
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -423,125 +527,65 @@ export const RechargeModal = ({ isOpen, onClose, user, onUpdateCredits }) => {
               Add Wallet Credits / क्रेडिट खरीदें
             </h3>
             <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-              {step === "packages"
-                ? "Select a recharge plan / रिचार्ज प्लान चुनें"
-                : "Contact Admin for Recharge / रिचार्ज के लिए संपर्क करें"}
+              Select a recharge plan / रिचार्ज प्लान चुनें
             </p>
           </div>
         </div>
 
-        {/* Step 1: Packages selection */}
-        {step === "packages" && (
-          <div className="space-y-4">
-            <p className="text-sm font-semibold text-slate-500 leading-relaxed">
-              Select one of our tailored packages to add credits to your account. 1 credit allows generating, printing, or saving 1 farmer card.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {packages.map((pkg) => (
-                <div
-                  key={pkg.id}
-                  onClick={() => setSelectedPkg(pkg)}
-                  className={`border rounded-2xl p-5 cursor-pointer transition-all flex flex-col justify-between relative hover-scale ${
-                    selectedPkg.id === pkg.id
-                      ? "border-emerald-600 ring-2 ring-emerald-500/20 bg-emerald-50/20"
-                      : "border-slate-200 bg-white"
-                  }`}
-                >
-                  {pkg.popular && (
-                    <span className="absolute -top-2.5 right-4 px-2 py-0.5 bg-amber-500 text-white text-[8px] font-black uppercase tracking-wider rounded-full shadow-xs">
-                      Popular
-                    </span>
-                  )}
-                  <div>
-                    <h4 className="font-extrabold text-sm text-slate-800">{pkg.name}</h4>
-                    <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-wider">
-                      {pkg.credits} Card Credits
-                    </p>
-                  </div>
-                  <div className="mt-6 flex items-baseline gap-1">
-                    <span className="text-2xl font-black text-[#064e3b]">₹{pkg.amount}</span>
-                  </div>
+        {/* Packages selection */}
+        <div className="space-y-4">
+          <p className="text-sm font-semibold text-slate-500 leading-relaxed">
+            Select one of our tailored packages to add credits to your account. 1 credit allows generating, printing, or saving 1 farmer card.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {packages.map((pkg) => (
+              <div
+                key={pkg.id}
+                onClick={() => setSelectedPkg(pkg)}
+                className={`border rounded-2xl p-5 cursor-pointer transition-all flex flex-col justify-between relative hover-scale ${
+                  selectedPkg.id === pkg.id
+                    ? "border-emerald-600 ring-2 ring-emerald-500/20 bg-emerald-50/20"
+                    : "border-slate-200 bg-white"
+                }`}
+              >
+                {pkg.popular && (
+                  <span className="absolute -top-2.5 right-4 px-2 py-0.5 bg-amber-500 text-white text-[8px] font-black uppercase tracking-wider rounded-full shadow-xs">
+                    Popular
+                  </span>
+                )}
+                <div>
+                  <h4 className="font-extrabold text-sm text-slate-800">{pkg.name}</h4>
+                  <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-wider">
+                    {pkg.credits} Card Credits
+                  </p>
                 </div>
-              ))}
-            </div>
-
-            <div className="pt-4">
-              <button
-                onClick={() => setStep("contact_admin")}
-                className="w-full py-3 bg-[#064e3b] hover:bg-[#085a44] text-white text-sm font-black rounded-xl uppercase tracking-wider transition-colors shadow-lg cursor-pointer text-center"
-              >
-                Proceed to Recharge / आगे बढ़ें (₹{selectedPkg.amount})
-              </button>
-            </div>
+                <div className="mt-6 flex items-baseline gap-1">
+                  <span className="text-2xl font-black text-[#064e3b]">₹{pkg.amount}</span>
+                </div>
+              </div>
+            ))}
           </div>
-        )}
 
-        {/* Step 2: Contact Admin to Recharge */}
-        {step === "contact_admin" && (
-          <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-300">
-            {/* Selected Package Details */}
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex justify-between items-center text-xs font-bold text-slate-700">
-              <div>
-                <span className="text-slate-400 block uppercase tracking-wider text-[9px]">Selected Package</span>
-                <span className="font-black text-slate-800">{selectedPkg.name}</span>
-              </div>
-              <div className="text-right">
-                <span className="text-slate-400 block uppercase tracking-wider text-[9px]">Credits to Add</span>
-                <span className="font-black text-emerald-800 text-sm">{selectedPkg.credits} Credits (₹{selectedPkg.amount})</span>
-              </div>
-            </div>
-
-            {/* Admin Details Card */}
-            <div className="bg-emerald-50/40 border border-emerald-100/80 rounded-3xl p-6 text-center space-y-4">
-              <div className="mx-auto w-16 h-16 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center shadow-inner">
-                <User className="w-8 h-8" />
-              </div>
-              <div className="space-y-1">
-                <span className="text-[10px] uppercase font-black tracking-widest text-[#064e3b]">Recharge Administrator / व्यवस्थापक</span>
-                <h4 className="text-2xl font-black text-slate-800">Aditya Jagtap</h4>
-                <p className="text-sm font-bold text-slate-500">Contact Number: <span className="text-emerald-800 font-extrabold">8788900807</span></p>
-              </div>
-              <p className="text-xs font-semibold text-slate-500 max-w-sm mx-auto leading-relaxed">
-                Please contact Aditya Jagtap to complete your payment and recharge your account wallet.
-              </p>
-            </div>
-
-            {/* Call and WhatsApp Quick Actions */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              <a
-                href="tel:8788900807"
-                className="flex items-center justify-center gap-2 py-3 bg-[#064e3b] hover:bg-[#085a44] text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-md transition-all text-center cursor-pointer"
-              >
-                <Phone className="w-4 h-4" />
-                Call Admin / कॉल करें
-              </a>
-              <a
-                href={`https://wa.me/918788900807?text=${encodeURIComponent(
-                  `Hi Aditya, I would like to recharge my account with the "${selectedPkg.name}" (Price: ₹${selectedPkg.amount}). Registered details - Name: ${user?.name || 'Farmer'}, Mobile: ${user?.mobile || 'N/A'}.`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 py-3 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-md transition-all text-center cursor-pointer"
-              >
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.488 1.459 5.416 1.46 5.561 0 10.088-4.526 10.091-10.087.001-2.693-1.045-5.225-2.946-7.128C17.3 1.503 14.77 1.459 12.008 1.459c-5.564 0-10.09 4.526-10.094 10.088-.002 1.902.501 3.762 1.458 5.378L1.879 21.62l4.768-1.258L6.647 19.16z"/>
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004"/>
-                </svg>
-                Chat on WhatsApp / व्हाट्सएप चैट
-              </a>
-            </div>
-
-            {/* Back Action */}
-            <div className="flex justify-between items-center pt-2">
-              <button
-                onClick={() => setStep("packages")}
-                className="px-5 py-2.5 border border-slate-200 text-slate-500 hover:bg-slate-50 text-xs font-bold rounded-xl cursor-pointer"
-              >
-                Go Back / वापस जाएं
-              </button>
-            </div>
+          <div className="pt-4">
+            <button
+              onClick={handleOnlineRecharge}
+              disabled={loading}
+              className="w-full py-3 bg-[#064e3b] hover:bg-[#085a44] text-white text-xs font-black rounded-xl uppercase tracking-wider transition-all shadow-md cursor-pointer text-center flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4.5 h-4.5 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <CreditCard className="w-4 h-4" />
+                  Pay Online / ऑनलाइन (₹{selectedPkg.amount})
+                </>
+              )}
+            </button>
           </div>
-        )}
+        </div>
       </div>
     </Modal>
   );

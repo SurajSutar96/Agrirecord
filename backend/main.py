@@ -1,12 +1,22 @@
 import os
 import uuid
 import datetime
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+parent_env = os.path.join(os.path.dirname(__file__), "..", ".env")
+if os.path.exists(parent_env):
+    load_dotenv(parent_env)
+
 from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from typing import List, Optional
 
-from . import schemas, payment
+from . import schemas, payment, payment_razorpay
+
+
 
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -87,6 +97,56 @@ def ensure_datetime(val) -> datetime.datetime:
         except Exception:
             pass
     return datetime.datetime.utcnow()
+
+def get_global_settings():
+    doc_ref = db.collection("settings").document("global")
+    doc = doc_ref.get()
+    if doc.exists:
+        data = doc.to_dict()
+        required_fields = {
+            "credit_price": 15.0,
+            "pkg_basic_price": 150.0,
+            "pkg_silver_price": 400.0,
+            "pkg_gold_price": 1200.0,
+            "support_phone": "+91 87889 00807",
+            "support_message": "Hi Aditya, I am facing an issue with AgriRecord."
+        }
+        modified = False
+        for k, v in required_fields.items():
+            if k not in data:
+                data[k] = v
+                modified = True
+        if modified:
+            doc_ref.set(data)
+        return data
+
+    defaults = {
+        "credit_price": 15.0,
+        "pkg_basic_price": 150.0,
+        "pkg_silver_price": 400.0,
+        "pkg_gold_price": 1200.0,
+        "support_phone": "+91 87889 00807",
+        "support_message": "Hi Aditya, I am facing an issue with AgriRecord."
+    }
+    doc_ref.set(defaults)
+    return defaults
+
+def log_admin_action(token: str, action_type: str, description: str):
+    try:
+        uid = get_current_user_id(token)
+        user_doc = db.collection("users").document(uid).get()
+        name = "Unknown Admin"
+        if user_doc.exists:
+            name = user_doc.to_dict().get("name", "Unknown Admin")
+        db.collection("admin_logs").add({
+            "admin_id": uid,
+            "admin_name": name,
+            "action_type": action_type,
+            "description": description,
+            "timestamp": datetime.datetime.utcnow()
+        })
+    except Exception as e:
+        print(f"Failed to log admin action: {str(e)}")
 
 from pydantic import BaseModel
 
@@ -399,6 +459,122 @@ def verify_cashfree_order(verify_data: schemas.OrderVerify):
             order_ref.update({"status": "FAILED"})
         return {"success": False, "order_status": res.get("order_status", "FAILED")}
 
+@app.post("/api/create-order")
+def create_order(order_data: schemas.OrderCreate, token: str = Depends(get_token)):
+    try:
+        user_id = get_current_user_id(token)
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
+
+    if order_data.amount < 1.0:
+        raise HTTPException(status_code=400, detail="Minimum order amount is ₹1.00")
+
+    try:
+        receipt_id = f"rcpt_{uuid.uuid4().hex[:12]}"
+        res = payment_razorpay.create_razorpay_order(order_data.amount, receipt_id)
+        
+        # Save pending order in Firestore
+        order_id = res["order_id"]
+        order_ref = db.collection("orders").document(order_id)
+        order_ref.set({
+            "order_id": order_id,
+            "customer_id": order_data.customerId,
+            "customer_phone": order_data.customerPhone,
+            "customer_name": order_data.customerName,
+            "amount": order_data.amount,
+            "package_id": order_data.packageId,
+            "status": "PENDING",
+            "createdAt": datetime.datetime.utcnow()
+        })
+        
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Razorpay order creation failed: {str(e)}")
+
+@app.post("/api/verify-payment")
+def verify_payment(verify_data: schemas.RazorpayVerifyPayload, token: str = Depends(get_token)):
+    try:
+        user_id = get_current_user_id(token)
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
+
+    is_valid = payment_razorpay.verify_razorpay_signature(
+        verify_data.razorpay_order_id,
+        verify_data.razorpay_payment_id,
+        verify_data.razorpay_signature
+    )
+    
+    if not is_valid:
+        raise HTTPException(status_code=400, detail="Signature verification failed")
+
+    order_ref = db.collection("orders").document(verify_data.razorpay_order_id)
+    order_doc = order_ref.get()
+    
+    credits_to_add = 0
+    if order_doc.exists:
+        order_data = order_doc.to_dict()
+        if order_data.get("status") == "PAID":
+            return {"success": True, "credits": 0, "message": "Payment already processed"}
+            
+        order_ref.update({"status": "PAID", "razorpay_payment_id": verify_data.razorpay_payment_id})
+        package_id = order_data.get("package_id")
+        
+        settings = get_global_settings()
+        package_credits_map = {
+            "pkg_basic": 10,
+            "pkg_silver": 30,
+            "pkg_gold": 100
+        }
+        credits_to_add = package_credits_map.get(package_id, 0)
+        
+        if credits_to_add == 0:
+            amount = order_data.get("amount", 0)
+            credit_price = settings.get("credit_price", 15.0)
+            if abs(amount - settings.get("pkg_basic_price", 150.0)) < 0.1:
+                credits_to_add = 10
+            elif abs(amount - settings.get("pkg_silver_price", 400.0)) < 0.1:
+                credits_to_add = 30
+            elif abs(amount - settings.get("pkg_gold_price", 1200.0)) < 0.1:
+                credits_to_add = 100
+            elif credit_price > 0:
+                credits_to_add = int(amount / credit_price)
+                
+        customer_id = order_data.get("customer_id")
+        user_ref = db.collection("users").document(customer_id)
+        user_doc = user_ref.get()
+        if user_doc.exists:
+            user_data = user_doc.to_dict()
+            current_credits = user_data.get("freeCredits", 0)
+            user_ref.update({"freeCredits": current_credits + credits_to_add})
+    else:
+        raise HTTPException(status_code=400, detail="Order not found in database")
+        
+    return {"success": True, "credits": credits_to_add}
+
+@app.get("/api/my-payments")
+def get_my_payments(token: str = Depends(get_token)):
+    try:
+        user_id = get_current_user_id(token)
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
+
+    try:
+        docs = db.collection("orders").where("customer_id", "==", user_id).stream()
+        payments_list = []
+        for doc in docs:
+            data = doc.to_dict()
+            created_at = data.get("createdAt")
+            if isinstance(created_at, datetime.datetime):
+                data["createdAt"] = created_at.isoformat()
+            elif hasattr(created_at, "isoformat"):
+                data["createdAt"] = created_at.isoformat()
+            payments_list.append(data)
+        
+        payments_list.sort(key=lambda x: x.get("createdAt", ""), reverse=True)
+        return payments_list
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch payments: {str(e)}")
+
 # ADMIN ENDPOINTS
 def check_admin(token: str) -> bool:
     user_id = get_current_user_id(token)
@@ -434,17 +610,27 @@ def deduct_credit(token: str = Depends(get_token)):
     
     return {"success": True, "freeCredits": free_credits}
 
-@app.get("/api/admin/users", response_model=List[schemas.UserResponse])
-def get_all_users(token: str = Depends(get_token)):
+@app.get("/api/admin/users")
+def get_all_users(token: str = Depends(get_token), page: int = 1, limit: int = 10, search: str = ""):
     check_admin(token)
     docs = db.collection("users").stream()
     users = []
     for doc in docs:
         d = doc.to_dict()
-        d["createdAt"] = ensure_datetime(d.get("createdAt"))
+        d["id"] = doc.id
+        if "createdAt" in d:
+            d["createdAt"] = ensure_datetime(d["createdAt"]).isoformat()
+        if search:
+            search_lower = search.lower()
+            if (search_lower not in d.get("name", "").lower()) and \
+               (search_lower not in d.get("mobile", "")) and \
+               (search_lower not in d.get("email", "").lower()):
+                continue
         users.append(d)
-    users.sort(key=lambda x: x.get("createdAt"), reverse=True)
-    return users
+    users.sort(key=lambda x: x.get("name", "").lower())
+    total_items = len(users)
+    sliced_users = users[(page - 1) * limit : page * limit]
+    return {"items": sliced_users, "total": total_items}
 
 @app.post("/api/admin/update-credits")
 def update_credits(data: schemas.UserUpdateCredits, token: str = Depends(get_token)):
@@ -460,6 +646,7 @@ def update_credits(data: schemas.UserUpdateCredits, token: str = Depends(get_tok
         raise HTTPException(status_code=400, detail="Cannot modify credits for super-administrator account")
         
     user_ref.update({"freeCredits": data.credits})
+    log_admin_action(token, "UPDATE_CREDITS", f"Modified wallet balance for user {user_data.get('name')} ({user_data.get('mobile')}) to {data.credits} credits (Previous: {user_data.get('freeCredits')})")
     return {"success": True, "freeCredits": data.credits}
 
 @app.post("/api/admin/update-role")
@@ -476,6 +663,7 @@ def update_role(data: schemas.UserUpdateRole, token: str = Depends(get_token)):
         raise HTTPException(status_code=400, detail="Cannot modify role for super-administrator account")
         
     user_ref.update({"role": data.role})
+    log_admin_action(token, "UPDATE_ROLE", f"Changed user role for user {user_data.get('name')} ({user_data.get('mobile')}) to {data.role} (Previous: {user_data.get('role')})")
     return {"success": True, "role": data.role}
 
 @app.post("/api/admin/add-user")
@@ -504,17 +692,28 @@ def admin_add_user(data: schemas.AdminAddUser, token: str = Depends(get_token)):
     new_user_data["createdAt"] = ensure_datetime(new_user_data.get("createdAt"))
     return new_user_data
 
-@app.get("/api/admin/cards", response_model=List[schemas.CardResponse])
-def get_all_cards(token: str = Depends(get_token)):
+@app.get("/api/admin/cards")
+def get_all_cards(token: str = Depends(get_token), page: int = 1, limit: int = 10, search: str = ""):
     check_admin(token)
     docs = db.collection("cards").stream()
     cards = []
     for doc in docs:
         d = doc.to_dict()
-        d["createdAt"] = ensure_datetime(d.get("createdAt"))
+        d["id"] = doc.id
+        if "createdAt" in d:
+            d["createdAt"] = ensure_datetime(d["createdAt"]).isoformat()
+        if search:
+            search_lower = search.lower()
+            if (search_lower not in d.get("nameEnglish", "").lower()) and \
+               (search_lower not in d.get("nameHindi", "")) and \
+               (search_lower not in d.get("farmerId", "").lower()) and \
+               (search_lower not in d.get("mobile", "")):
+                continue
         cards.append(d)
-    cards.sort(key=lambda x: x.get("createdAt"), reverse=True)
-    return cards
+    cards.sort(key=lambda x: x.get("createdAt", ""), reverse=True)
+    total_items = len(cards)
+    sliced_cards = cards[(page - 1) * limit : page * limit]
+    return {"items": sliced_cards, "total": total_items}
 
 @app.get("/api/admin/stats")
 def get_admin_stats(token: str = Depends(get_token)):
@@ -524,7 +723,8 @@ def get_admin_stats(token: str = Depends(get_token)):
     total_users = sum(1 for _ in user_docs)
     
     card_docs = db.collection("cards").stream()
-    total_cards = sum(1 for _ in card_docs)
+    cards_list_local = [c.to_dict() for c in card_docs]
+    total_cards = len(cards_list_local)
     
     order_docs = db.collection("orders").stream()
     orders = [o.to_dict() for o in order_docs]
@@ -554,13 +754,44 @@ def get_admin_stats(token: str = Depends(get_token)):
             "status": o.get("status"),
             "createdAt": created_at_dt.strftime("%Y-%m-%d %H:%M:%S")
         })
+
+    # 7-day metrics aggregation
+    import datetime as dt_module
+    today = dt_module.date.today()
+    daily_revenue = {}
+    daily_cards = {}
+    for i in range(7):
+        d = today - dt_module.timedelta(days=i)
+        date_str = d.strftime("%Y-%m-%d")
+        daily_revenue[date_str] = 0
+        daily_cards[date_str] = 0
+        
+    for o in orders:
+        if o.get("status") == "PAID":
+            created_dt = ensure_datetime(o.get("createdAt"))
+            if created_dt:
+                date_str = created_dt.strftime("%Y-%m-%d")
+                if date_str in daily_revenue:
+                    daily_revenue[date_str] += o.get("amount", 0)
+                    
+    for c in cards_list_local:
+        created_dt = ensure_datetime(c.get("createdAt"))
+        if created_dt:
+            date_str = created_dt.strftime("%Y-%m-%d")
+            if date_str in daily_cards:
+                daily_cards[date_str] += 1
+                
+    revenue_chart_data = [{"date": k, "amount": daily_revenue[k]} for k in sorted(daily_revenue.keys())]
+    cards_chart_data = [{"date": k, "count": daily_cards[k]} for k in sorted(daily_cards.keys())]
         
     return {
         "totalUsers": total_users,
         "totalCards": total_cards,
         "totalRevenue": total_revenue,
         "successRate": success_rate,
-        "recentOrders": orders_list
+        "recentOrders": orders_list,
+        "revenueChartData": revenue_chart_data,
+        "cardsChartData": cards_chart_data
     }
 
 @app.delete("/api/admin/cards/{card_id}")
@@ -570,7 +801,9 @@ def delete_card(card_id: str, token: str = Depends(get_token)):
     card_doc = card_ref.get()
     if not card_doc.exists:
         raise HTTPException(status_code=404, detail="Card not found")
+    card_data = card_doc.to_dict()
     card_ref.delete()
+    log_admin_action(token, "DELETE_CARD", f"Deleted farmer card ID: {card_data.get('farmerId')} ({card_data.get('nameEnglish')})")
     return {"success": True}
 
 @app.delete("/api/admin/users/{user_id}")
@@ -587,7 +820,82 @@ def delete_user(user_id: str, token: str = Depends(get_token)):
         raise HTTPException(status_code=400, detail="Cannot delete super-administrator account")
         
     user_ref.delete()
+    log_admin_action(token, "DELETE_USER", f"Deleted user profile: {user_data.get('name')} (Mobile: {user_data.get('mobile')})")
     return {"success": True}
+
+@app.get("/api/admin/transactions")
+def get_admin_transactions(token: str = Depends(get_token), page: int = 1, limit: int = 10, status: str = "ALL"):
+    check_admin(token)
+    order_ref = db.collection("orders").stream()
+    all_orders = []
+    for doc in order_ref:
+        o = doc.to_dict()
+        if status != "ALL":
+            if o.get("status", "").upper() != status.upper():
+                continue
+        
+        created_at_dt = ensure_datetime(o.get("createdAt"))
+        all_orders.append({
+            "order_id": o.get("order_id"),
+            "customer_id": o.get("customer_id"),
+            "customer_phone": o.get("customer_phone"),
+            "customer_name": o.get("customer_name"),
+            "amount": o.get("amount"),
+            "package_id": o.get("package_id"),
+            "status": o.get("status"),
+            "createdAt": created_at_dt.strftime("%Y-%m-%d %H:%M:%S") if created_at_dt else "N/A",
+            "createdAt_dt": created_at_dt
+        })
+        
+    all_orders.sort(key=lambda x: x.get("createdAt_dt") or datetime.datetime.min, reverse=True)
+    total_items = len(all_orders)
+    sliced_orders = all_orders[(page - 1) * limit : page * limit]
+    
+    for o in sliced_orders:
+        if "createdAt_dt" in o:
+            del o["createdAt_dt"]
+            
+    return {"items": sliced_orders, "total": total_items}
+
+@app.get("/api/admin/logs")
+def get_admin_logs(token: str = Depends(get_token), limit: int = 50):
+    check_admin(token)
+    logs_ref = db.collection("admin_logs").order_by("timestamp", direction="DESCENDING").limit(limit).stream()
+    logs = []
+    for doc in logs_ref:
+        d = doc.to_dict()
+        d["id"] = doc.id
+        if "timestamp" in d:
+            d["timestamp"] = ensure_datetime(d["timestamp"]).strftime("%Y-%m-%d %H:%M:%S")
+        logs.append(d)
+    return logs
+
+@app.get("/api/settings")
+def get_public_settings():
+    settings = get_global_settings()
+    return {
+        "credit_price": settings.get("credit_price", 15.0),
+        "pkg_basic_price": settings.get("pkg_basic_price", 150.0),
+        "pkg_silver_price": settings.get("pkg_silver_price", 400.0),
+        "pkg_gold_price": settings.get("pkg_gold_price", 1200.0),
+        "support_phone": settings.get("support_phone", "+91 87889 00807"),
+        "support_message": settings.get("support_message", "Hi Aditya, I am facing an issue with AgriRecord.")
+    }
+
+@app.get("/api/admin/settings")
+def get_settings(token: str = Depends(get_token)):
+    check_admin(token)
+    return get_global_settings()
+
+@app.post("/api/admin/settings")
+def save_settings(data: schemas.GlobalSettingsUpdate, token: str = Depends(get_token)):
+    check_admin(token)
+    doc_ref = db.collection("settings").document("global")
+    settings_payload = data.model_dump()
+    doc_ref.set(settings_payload)
+    log_admin_action(token, "UPDATE_SETTINGS", f"Updated global settings: Pricing credit={data.credit_price}, Basic={data.pkg_basic_price}, Silver={data.pkg_silver_price}, Gold={data.pkg_gold_price}")
+    return {"success": True, "settings": settings_payload}
+
 # Serve compiled frontend static files in production (dist directory)
 from fastapi.responses import FileResponse
 
