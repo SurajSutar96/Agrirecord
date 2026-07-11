@@ -484,9 +484,9 @@ export default function CardPreview({ data, forceFullScale = false, previewRef, 
                   {[...Array(3)].map((_, c) => (
                     <span 
                       key={c}
-                      className="font-black text-[19px] uppercase tracking-wider select-none pointer-events-none whitespace-nowrap"
+                      className="font-black text-[26px] uppercase tracking-wider select-none pointer-events-none whitespace-nowrap"
                       style={{
-                        color: "rgba(220, 38, 38, 0.60)",
+                        color: "rgba(220, 38, 38, 0.65)",
                         textShadow: "1px 1px 0 rgba(255, 255, 255, 0.75)"
                       }}
                     >
@@ -601,9 +601,9 @@ export default function CardPreview({ data, forceFullScale = false, previewRef, 
                   {[...Array(3)].map((_, c) => (
                     <span 
                       key={c}
-                      className="font-black text-[19px] uppercase tracking-wider select-none pointer-events-none whitespace-nowrap"
+                      className="font-black text-[26px] uppercase tracking-wider select-none pointer-events-none whitespace-nowrap"
                       style={{
-                        color: "rgba(220, 38, 38, 0.60)",
+                        color: "rgba(220, 38, 38, 0.65)",
                         textShadow: "1px 1px 0 rgba(255, 255, 255, 0.75)"
                       }}
                     >
