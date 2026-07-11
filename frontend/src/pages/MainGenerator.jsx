@@ -1061,26 +1061,26 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
       {/* Video Guide Modal */}
       {activeVideoGuide && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-[9999] no-print animate-in fade-in duration-200">
-          <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 max-w-4xl w-full max-h-[95vh] overflow-y-auto flex flex-col gap-4 relative animate-in fade-in zoom-in duration-200">
+          <div className="bg-white border border-slate-200 rounded-3xl p-3 sm:p-6 max-w-4xl w-full max-h-[95vh] overflow-y-auto flex flex-col gap-3 sm:gap-4 relative animate-in fade-in zoom-in duration-200">
             <button
               onClick={() => setActiveVideoGuide(null)}
-              className="absolute top-3 right-3 sm:top-4 sm:right-4 text-slate-500 hover:text-slate-800 transition-colors p-1 bg-slate-100 hover:bg-slate-200 rounded-full z-10"
+              className="absolute top-2.5 right-2.5 sm:top-4 sm:right-4 text-slate-500 hover:text-slate-800 transition-colors p-1 bg-slate-100 hover:bg-slate-200 rounded-full z-10"
             >
               <Plus className="w-5 h-5 sm:w-6 sm:h-6 rotate-45" />
             </button>
-            <h3 className="text-xs sm:text-base font-black text-slate-800 uppercase tracking-wider border-b pb-3 pr-10">
+            <h3 className="text-[10px] sm:text-base font-black text-slate-800 uppercase tracking-wider border-b pb-2.5 pr-8">
               {activeVideoGuide === "login"
                 ? "Account Login/Creation & Recharge Guide / लॉगिन और रिचार्ज वीडियो गाइड"
                 : "Farmer ID Card Creation Guide / कार्ड बनाने की वीडियो गाइड"}
             </h3>
-            <div className="aspect-video w-full rounded-2xl overflow-hidden border border-slate-200 bg-slate-950">
+            <div className="w-full aspect-video min-h-[250px] sm:min-h-[420px] rounded-2xl overflow-hidden border border-slate-200 bg-slate-950 relative">
               <iframe
                 src={
                   activeVideoGuide === "login"
                     ? "https://drive.google.com/file/d/1yLIiky1BgN4P7hqms6jZnWXm5N8OY0fS/preview"
                     : "https://drive.google.com/file/d/1zJHw6uyXLqMNV8E8lYeqmnHvLxHPiiAp/preview"
                 }
-                className="w-full h-full"
+                className="absolute top-0 left-0 w-full h-full border-0"
                 allow="autoplay; encrypted-media"
                 allowFullScreen
               ></iframe>
