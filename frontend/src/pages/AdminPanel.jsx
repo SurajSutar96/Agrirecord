@@ -957,7 +957,7 @@ export default function AdminPanel({ user, onAuthSuccess }) {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Basic Plan Price (₹10 credits)</label>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Starter Plan Price (10 Credits)</label>
                 <input
                   type="number"
                   value={globalSettings.pkg_basic_price}
@@ -967,7 +967,7 @@ export default function AdminPanel({ user, onAuthSuccess }) {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Silver Plan Price (₹30 credits)</label>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Bulk Plan Price (50 Credits)</label>
                 <input
                   type="number"
                   value={globalSettings.pkg_silver_price}
@@ -977,7 +977,7 @@ export default function AdminPanel({ user, onAuthSuccess }) {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Gold Plan Price (₹100 credits)</label>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Gold Plan Price (100 Credits)</label>
                 <input
                   type="number"
                   value={globalSettings.pkg_gold_price}

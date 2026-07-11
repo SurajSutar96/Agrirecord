@@ -410,10 +410,35 @@ export const RechargeModal = ({ isOpen, onClose, user, onUpdateCredits }) => {
   });
 
   const packages = [
-    { id: "pkg_1_credit", name: "1 Credit (Single Print)", amount: settings.credit_price, credits: 1 },
-    { id: "pkg_10_credits", name: "10 Credits (Starter Pack)", amount: settings.pkg_basic_price, credits: 10, popular: true },
-    { id: "pkg_50_credits", name: "50 Credits (Bulk Pack)", amount: settings.pkg_silver_price, credits: 50 },
-    { id: "pkg_100_credits", name: "100 Credits (Gold Plan)", amount: settings.pkg_gold_price, credits: 100 }
+    { 
+      id: "pkg_1_credit", 
+      name: "1 Credit (Single Print)", 
+      amount: settings.credit_price, 
+      credits: 1,
+      desc: "Perfect for printing a single farmer card."
+    },
+    { 
+      id: "pkg_10_credits", 
+      name: "10 Credits (Starter Pack)", 
+      amount: settings.pkg_basic_price, 
+      credits: 10, 
+      popular: true,
+      desc: `Best value starter. Just ₹${(settings.pkg_basic_price / 10).toFixed(0)} per credit!`
+    },
+    { 
+      id: "pkg_50_credits", 
+      name: "50 Credits (Bulk Pack)", 
+      amount: settings.pkg_silver_price, 
+      credits: 50,
+      desc: `Great for active centers. Just ₹${(settings.pkg_silver_price / 50).toFixed(0)} per credit!`
+    },
+    { 
+      id: "pkg_100_credits", 
+      name: "100 Credits (Gold Plan)", 
+      amount: settings.pkg_gold_price, 
+      credits: 100,
+      desc: `Save maximum on bulk. Just ₹${(settings.pkg_gold_price / 100).toFixed(0)} per credit!`
+    }
   ];
 
   const [selectedPkg, setSelectedPkg] = useState(packages[1]);
@@ -596,8 +621,11 @@ export const RechargeModal = ({ isOpen, onClose, user, onUpdateCredits }) => {
                   <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-wider">
                     {pkg.credits} Card Credits
                   </p>
+                  <p className="text-[11px] text-slate-500 font-semibold mt-2 leading-relaxed">
+                    {pkg.desc}
+                  </p>
                 </div>
-                <div className="mt-6 flex items-baseline gap-1">
+                <div className="mt-4 flex items-baseline gap-1">
                   <span className="text-2xl font-black text-[#064e3b]">₹{pkg.amount}</span>
                 </div>
               </div>
