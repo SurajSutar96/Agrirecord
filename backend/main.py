@@ -105,9 +105,9 @@ def get_global_settings():
         data = doc.to_dict()
         required_fields = {
             "credit_price": 15.0,
-            "pkg_basic_price": 150.0,
+            "pkg_basic_price": 100.0,
             "pkg_silver_price": 400.0,
-            "pkg_gold_price": 1200.0,
+            "pkg_gold_price": 700.0,
             "support_phone": "+91 70571 07982",
             "support_message": "Hi Aditya, I am facing an issue with AgriRecord."
         }
@@ -122,9 +122,9 @@ def get_global_settings():
 
     defaults = {
         "credit_price": 15.0,
-        "pkg_basic_price": 150.0,
+        "pkg_basic_price": 100.0,
         "pkg_silver_price": 400.0,
-        "pkg_gold_price": 1200.0,
+        "pkg_gold_price": 700.0,
         "support_phone": "+91 70571 07982",
         "support_message": "Hi Aditya, I am facing an issue with AgriRecord."
     }
@@ -553,11 +553,11 @@ def verify_payment(verify_data: schemas.RazorpayVerifyPayload, token: str = Depe
         if credits_to_add == 0:
             amount = order_data.get("amount", 0)
             credit_price = settings.get("credit_price", 15.0)
-            if abs(amount - settings.get("pkg_basic_price", 150.0)) < 0.1:
+            if abs(amount - settings.get("pkg_basic_price", 100.0)) < 0.1:
                 credits_to_add = 10
             elif abs(amount - settings.get("pkg_silver_price", 400.0)) < 0.1:
-                credits_to_add = 30
-            elif abs(amount - settings.get("pkg_gold_price", 1200.0)) < 0.1:
+                credits_to_add = 50
+            elif abs(amount - settings.get("pkg_gold_price", 700.0)) < 0.1:
                 credits_to_add = 100
             elif credit_price > 0:
                 credits_to_add = int(amount / credit_price)
@@ -898,9 +898,9 @@ def get_public_settings():
     settings = get_global_settings()
     return {
         "credit_price": settings.get("credit_price", 15.0),
-        "pkg_basic_price": settings.get("pkg_basic_price", 150.0),
+        "pkg_basic_price": settings.get("pkg_basic_price", 100.0),
         "pkg_silver_price": settings.get("pkg_silver_price", 400.0),
-        "pkg_gold_price": settings.get("pkg_gold_price", 1200.0),
+        "pkg_gold_price": settings.get("pkg_gold_price", 700.0),
         "support_phone": settings.get("support_phone", "+91 70571 07982"),
         "support_message": settings.get("support_message", "Hi Aditya, I am facing an issue with AgriRecord.")
     }

@@ -401,14 +401,51 @@ export const ContactModal = ({ isOpen, onClose }) => {
 };
 
 export const RechargeModal = ({ isOpen, onClose, user, onUpdateCredits }) => {
-  const [selectedPkg, setSelectedPkg] = useState({ id: "pkg_10_credits", name: "10 Credits (Starter Pack)", amount: 100, credits: 10 });
   const [loading, setLoading] = useState(false);
+  const [settings, setSettings] = useState({
+    credit_price: 15,
+    pkg_basic_price: 100,
+    pkg_silver_price: 400,
+    pkg_gold_price: 700
+  });
 
   const packages = [
-    { id: "pkg_1_credit", name: "1 Credit (Single Print)", amount: 15, credits: 1 },
-    { id: "pkg_10_credits", name: "10 Credits (Starter Pack)", amount: 100, credits: 10, popular: true },
-    { id: "pkg_50_credits", name: "50 Credits (Bulk Pack)", amount: 400, credits: 50 }
+    { id: "pkg_1_credit", name: "1 Credit (Single Print)", amount: settings.credit_price, credits: 1 },
+    { id: "pkg_10_credits", name: "10 Credits (Starter Pack)", amount: settings.pkg_basic_price, credits: 10, popular: true },
+    { id: "pkg_50_credits", name: "50 Credits (Bulk Pack)", amount: settings.pkg_silver_price, credits: 50 },
+    { id: "pkg_100_credits", name: "100 Credits (Gold Plan)", amount: settings.pkg_gold_price, credits: 100 }
   ];
+
+  const [selectedPkg, setSelectedPkg] = useState(packages[1]);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      fetch("/api/settings")
+        .then(res => res.json())
+        .then(data => {
+          const freshSettings = {
+            credit_price: Number(data.credit_price) || 15,
+            pkg_basic_price: Number(data.pkg_basic_price) || 100,
+            pkg_silver_price: Number(data.pkg_silver_price) || 400,
+            pkg_gold_price: Number(data.pkg_gold_price) || 700
+          };
+          setSettings(freshSettings);
+          
+          setSelectedPkg(prev => {
+            if (prev.id === "pkg_1_credit") {
+              return { ...prev, amount: freshSettings.credit_price };
+            } else if (prev.id === "pkg_50_credits") {
+              return { ...prev, amount: freshSettings.pkg_silver_price };
+            } else if (prev.id === "pkg_100_credits") {
+              return { ...prev, amount: freshSettings.pkg_gold_price };
+            } else {
+              return { ...prev, amount: freshSettings.pkg_basic_price };
+            }
+          });
+        })
+        .catch(err => console.error("Failed to fetch current recharge prices:", err));
+    }
+  }, [isOpen]);
 
   const handleOnlineRecharge = async () => {
     if (!user) {
@@ -458,6 +495,7 @@ export const RechargeModal = ({ isOpen, onClose, user, onUpdateCredits }) => {
         handler: async function (response) {
           try {
             setLoading(true);
+            const token = localStorage.getItem("agri_record_token");
             const verifyRes = await fetch("/api/verify-payment", {
               method: "POST",
               headers: {
@@ -537,7 +575,7 @@ export const RechargeModal = ({ isOpen, onClose, user, onUpdateCredits }) => {
           <p className="text-sm font-semibold text-slate-500 leading-relaxed">
             Select one of our tailored packages to add credits to your account. 1 credit allows generating, printing, or saving 1 farmer card.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {packages.map((pkg) => (
               <div
                 key={pkg.id}
