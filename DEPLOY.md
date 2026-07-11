@@ -63,4 +63,4 @@ Once the deployment logs say `Application startup complete` and `Uvicorn running
 
 1. Open your Render Web Service URL (e.g., `https://agrirecord-app.onrender.com`).
 2. Log in using Google Sign-in to test registration and profile creation.
-3. If you log in with your super admin email (`surajsutar8154@gmail`), you will immediately get upgraded to `Admin` with unlimited credits. Go to the Admin Dashboard (URL `/admin` or via navigation dropdown) to monitor real-time user metrics, transaction logs, and cards in your Firestore database!
+3. If you log in with your super admin email (`adibhaujagtap@gmail.com` or `surajsutar8154@gmail.com`), you will immediately get upgraded to `Admin` with unlimited credits. Go to the Admin Dashboard (URL `/admin` or via navigation dropdown) to monitor real-time user metrics, transaction logs, and cards in your Firestore database!

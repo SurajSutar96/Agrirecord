@@ -28,7 +28,7 @@ export default function AdminPanel({ user, onAuthSuccess }) {
     pkg_basic_price: 150.0,
     pkg_silver_price: 400.0,
     pkg_gold_price: 1200.0,
-    support_phone: "+91 87889 00807",
+    support_phone: "+91 70571 07982",
     support_message: "Hi Aditya, I am facing an issue with AgriRecord."
   });
   const [savingSettings, setSavingSettings] = useState(false);

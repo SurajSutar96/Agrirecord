@@ -6,7 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel";
 import PolicyPage from "./pages/PolicyPage";
 import { RechargeModal, ProfileModal } from "./components/Modals";
-import { Landmark, HelpCircle, Mail, ShieldAlert, FileText, Truck, RotateCcw, CreditCard } from "lucide-react";
+import { Landmark, HelpCircle, Mail, ShieldAlert, FileText, CreditCard } from "lucide-react";
 import { auth, googleProvider, signInWithPopup } from "./firebase";
 import { ToastContainer } from "./components/Toast";
 
@@ -189,7 +189,7 @@ export default function App() {
           <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-bold text-slate-400 uppercase tracking-wider">
             <div className="flex items-center gap-2">
               <Landmark className="w-4 h-4 text-emerald-800" />
-              <span>&copy; {new Date().getFullYear()} AgriRecordPro. All Rights Reserved by SURAJ SUTAR.</span>
+              <span>&copy; {new Date().getFullYear()} AgriRecordPro. All Rights Reserved by Aditya Jagtap.</span>
             </div>
             
             <div className="flex flex-wrap gap-x-6 gap-y-2 justify-center md:justify-end">
@@ -201,12 +201,6 @@ export default function App() {
               </Link>
               <Link to="/refund-policy" className="hover:text-slate-600 transition-colors flex items-center gap-1">
                 <CreditCard className="w-4 h-4" /> Refund & Cancellation
-              </Link>
-              <Link to="/return-policy" className="hover:text-slate-600 transition-colors flex items-center gap-1">
-                <RotateCcw className="w-4 h-4" /> Return Policy
-              </Link>
-              <Link to="/shipping-policy" className="hover:text-slate-600 transition-colors flex items-center gap-1">
-                <Truck className="w-4 h-4" /> Shipping Policy
               </Link>
             </div>
             <div className="flex flex-wrap gap-x-6 gap-y-2 justify-center md:justify-end">
@@ -254,7 +248,7 @@ export default function App() {
         {/* Floating WhatsApp Support Widget */}
         <div className="fixed bottom-6 right-6 z-[999] flex flex-col items-center gap-1.5 no-print select-none">
           <a
-            href={`https://wa.me/918788900807?text=${encodeURIComponent(
+            href={`https://wa.me/917057107982?text=${encodeURIComponent(
               `Hi Aditya, I need support / assistance on AgriRecordPro. Registered details - Name: ${user?.name || 'Farmer'}, Mobile: ${user?.mobile || 'N/A'}.`
             )}`}
             target="_blank"

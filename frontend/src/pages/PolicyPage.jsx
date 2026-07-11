@@ -1,7 +1,7 @@
 import React from "react";
 import { useParams, Link } from "react-router-dom";
 import { 
-  FileText, ShieldAlert, CreditCard, RotateCcw, Truck, 
+  FileText, ShieldAlert, CreditCard, 
   ArrowLeft, ChevronRight, HelpCircle, Mail 
 } from "lucide-react";
 
@@ -41,20 +41,6 @@ const POLICIES = {
     icon: CreditCard,
     path: "/refund-policy",
   },
-  "return-policy": {
-    id: "return-policy",
-    title: "Return Policy",
-    titleHindi: "वापसी नीति",
-    icon: RotateCcw,
-    path: "/return-policy",
-  },
-  "shipping-policy": {
-    id: "shipping-policy",
-    title: "Shipping Policy",
-    titleHindi: "शिपिंग नीति",
-    icon: Truck,
-    path: "/shipping-policy",
-  },
 };
 
 const POLICY_LIST = Object.values(POLICIES);
@@ -64,7 +50,7 @@ function AboutContent() {
     <div className="space-y-5 text-slate-600 text-sm leading-relaxed font-medium">
       <p>
         <strong>AgriRecordPro</strong> is a digital formatting utility portal owned and operated by{" "}
-        <strong>SURAJ SUTAR</strong>. Our primary objective is to assist Indian farmers in formatting, 
+        <strong>Aditya Jagtap</strong>. Our primary objective is to assist Indian farmers in formatting, 
         organizing, and digitizing their land records and identity cards into clean, printable pocket formats.
       </p>
       <p>
@@ -114,25 +100,15 @@ function ContactContent() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-bold text-slate-700">
           <div>
             <span className="text-slate-400 block uppercase tracking-wider text-[9px] mb-0.5">Legal Entity Name / व्यापारी का नाम</span>
-            <span className="text-slate-800 text-sm">SURAJ SUTAR</span>
+            <span className="text-slate-800 text-sm">Aditya Jagtap</span>
           </div>
           <div>
             <span className="text-slate-400 block uppercase tracking-wider text-[9px] mb-0.5">Brand Name / ब्रांड नाम</span>
             <span className="text-slate-800 text-sm">AgriRecordPro</span>
           </div>
-          <div className="md:col-span-2">
-            <span className="text-slate-400 block uppercase tracking-wider text-[9px] mb-0.5">Registered Office Address / कार्यालय का पता</span>
-            <span className="text-slate-800 leading-normal">
-              House of Chandrakant Sutar, Infront of ZP School, Kawali, Taluka-Ausa, District-Latur, Maharashtra - 413520
-            </span>
-          </div>
-          <div>
-            <span className="text-slate-400 block uppercase tracking-wider text-[9px] mb-0.5">Customer Support Phone / फ़ोन नंबर</span>
-            <a href="tel:+919834212549" className="text-emerald-700 hover:underline text-sm">+91 9834212549</a>
-          </div>
           <div>
             <span className="text-slate-400 block uppercase tracking-wider text-[9px] mb-0.5">Support Email / ईमेल पता</span>
-            <a href="mailto:surajsutar8154@gmail.com" className="text-emerald-700 hover:underline text-sm">surajsutar8154@gmail.com</a>
+            <a href="mailto:adibhaujagtap@gmail.com" className="text-emerald-700 hover:underline text-sm">adibhaujagtap@gmail.com</a>
           </div>
           <div>
             <span className="text-slate-400 block uppercase tracking-wider text-[9px] mb-0.5">Support Timings / सहायता का समय</span>
@@ -169,9 +145,8 @@ function TermsContent() {
         to as 'Platform').
       </p>
       <p>
-        The Platform is owned by <strong>SURAJ SUTAR</strong>, with its registered office address at 
-        House of Chandrakant Sutar, Infront of ZP School, Kawali, Taluka-Ausa, District-Latur, 
-        Maharashtra - 413520 (hereinafter referred to as 'Platform Owner', 'we', 'us', 'our').
+        The Platform is owned by <strong>Aditya Jagtap</strong>, with its registered office address at 
+        Latur, Maharashtra (hereinafter referred to as 'Platform Owner', 'we', 'us', 'our').
       </p>
       <p>
         Your use of the Platform and services and tools are governed by the following terms and
@@ -282,7 +257,7 @@ function PrivacyContent() {
     <div className="space-y-5 text-slate-600 text-sm leading-relaxed font-medium">
       <h4 className="font-extrabold text-slate-800 text-base">Introduction</h4>
       <p>
-        This Privacy Policy describes how <strong>SURAJ SUTAR</strong> (collectively "we, our, us") 
+        This Privacy Policy describes how <strong>Aditya Jagtap</strong> (collectively "we, our, us") 
         collect, use, share, protect or otherwise process your information/personal data through our website{" "}
         <a
           href="https://agrirecord.onrender.com/"
@@ -359,10 +334,10 @@ function PrivacyContent() {
 
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mt-4">
         <h4 className="font-extrabold text-slate-800 text-sm">Grievance Officer</h4>
-        <p className="text-xs text-slate-500 font-bold mt-1">Name: SURAJ SUTAR</p>
-        <p className="text-xs text-slate-500 font-bold">Email: surajsutar8154@gmail.com</p>
-        <p className="text-xs text-slate-500 font-bold">Contact Phone: +91 9834212549</p>
-        <p className="text-xs text-slate-500 font-bold">Address: House of Chandrakant Sutar, Infront of ZP School, Kawali, Taluka-Ausa, District-Latur, Maharashtra - 413520</p>
+        <p className="text-xs text-slate-500 font-bold mt-1">Name: Aditya Jagtap</p>
+        <p className="text-xs text-slate-500 font-bold">Email: adibhaujagtap@gmail.com</p>
+        <p className="text-xs text-slate-500 font-bold">Contact Phone: +91 70571 07982</p>
+        <p className="text-xs text-slate-500 font-bold">Address: Latur, Maharashtra</p>
       </div>
     </div>
   );
@@ -395,59 +370,9 @@ function RefundContent() {
       </ol>
       <div className="bg-[#064e3b]/5 border border-[#064e3b]/10 rounded-xl p-4 text-xs text-slate-800 font-bold mt-4">
         <span className="text-[#064e3b] uppercase tracking-wide block mb-1">Refund Processing Time</span>
-        Once a refund is approved by AgriRecordPro (SURAJ SUTAR), the refund transaction is initiated. 
+        Once a refund is approved by AgriRecordPro (Aditya Jagtap), the refund transaction is initiated. 
         It will take <strong className="text-emerald-800 font-black">5 to 7 working days</strong> for the refund amount to reflect in your original payment method (bank account, card, or UPI wallet) as per standard payment gateway schedules.
       </div>
-    </div>
-  );
-}
-
-function ReturnContent() {
-  return (
-    <div className="space-y-5 text-slate-600 text-sm leading-relaxed font-medium">
-      <p>
-        We offer refund/exchange within the first <strong className="text-emerald-700">2 days</strong> from the date of your purchase. If <strong>2 days</strong> have passed since your purchase, you will not be offered a return, exchange, or refund of any kind.
-      </p>
-      <p>
-        Since AgriRecordPro provides digital credit formatting services, physical returns are not 
-        applicable. However, if a user experiences billing errors or transaction failures:
-      </p>
-      <ol className="list-decimal list-outside ml-5 space-y-2 text-slate-500 font-bold text-xs">
-        <li>The request should be raised within 2 days of the purchase date.</li>
-        <li>The purchased wallet credits should remain unused on the account to be eligible for a refund.</li>
-      </ol>
-      <p>
-        Once a dispute is validated and approved by customer support, standard refund processing 
-        times apply, and the corresponding digital credits will be revoked from your account wallet.
-      </p>
-    </div>
-  );
-}
-
-function ShippingContent() {
-  return (
-    <div className="space-y-5 text-slate-600 text-sm leading-relaxed font-medium">
-      <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-4 text-xs text-emerald-900 font-bold mb-4">
-        <span className="text-[#064e3b] uppercase tracking-wide block mb-1 font-black">Digital Service Delivery Policy</span>
-        AgriRecordPro is a digital identity card formatting SaaS utility. We do not ship physical products. 
-        All card services, wallet credit additions, and formatted PDF printouts are delivered digitally online.
-      </div>
-      
-      <p className="font-semibold text-slate-700">Delivery Guidelines:</p>
-      <ul className="list-disc list-inside space-y-2 text-xs text-slate-500 font-bold">
-        <li>
-          <strong>Wallet Credits:</strong> Added instantly to your account dashboard upon successful payment verification.
-        </li>
-        <li>
-          <strong>PDF Generation and Download:</strong> Instant download link is generated immediately on your dashboard after entering the details and submitting the card.
-        </li>
-        <li>
-          <strong>Shipping Charges:</strong> There are ₹0.00 shipping fees or delivery fees since no physical courier shipment is required.
-        </li>
-        <li>
-          <strong>Delivery Tracking:</strong> Transaction history and active balances are visible on the secure "Wallet" section of your dashboard.
-        </li>
-      </ul>
     </div>
   );
 }
@@ -458,8 +383,6 @@ const CONTENT_MAP = {
   terms: TermsContent,
   "privacy-policy": PrivacyContent,
   "refund-policy": RefundContent,
-  "return-policy": ReturnContent,
-  "shipping-policy": ShippingContent,
 };
 
 export default function PolicyPage() {
@@ -551,7 +474,7 @@ export default function PolicyPage() {
         <div className="border-t border-slate-100 px-6 sm:px-8 py-4 bg-slate-50/50">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-              © {new Date().getFullYear()} AgriRecordPro — All Rights Reserved by SURAJ SUTAR
+              © {new Date().getFullYear()} AgriRecordPro — All Rights Reserved by Aditya Jagtap
             </p>
             <div className="flex gap-3">
               {POLICY_LIST.filter((p) => p.id !== policyType)

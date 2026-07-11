@@ -50,16 +50,16 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
     nameEnglish: "ADITYA JAGTAP",
     dob: "15/08/1990",
     gender: "Male",
-    mobile: "9988776655",
+    mobile: "8888888888",
     aadhaar: "123456789012",
     farmerId: "",
-    address: "Village: Kawali, Post: Devtala, Taluka: Ausa, Dist: Latur, 413520",
+    address: "Village: Varvand, Taluka: Daund, District: Pune, Maharashtra, 412215",
     photoUrl: "",
     downloadDate: "",
     state: "Maharashtra",
     cardColor: "default",
     landDetails: [
-      { id: "1", district: "Latur", subDistrict: "Ausa", village: "Kawali", mOwnerNo: "452", khasra: "1256", area: "0.45 Hec" }
+      { id: "1", district: "Pune", subDistrict: "Daund", village: "Varvand", mOwnerNo: "452", khasra: "1256", area: "0.45 Hec" }
     ]
   });
 
@@ -77,6 +77,16 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
   useEffect(() => {
     if (!formData.farmerId) {
       generateRandomFarmerId();
+    }
+
+    // Scroll to video guide if hash is set
+    if (window.location.hash === "#video-guides") {
+      setTimeout(() => {
+        const element = document.getElementById("video-guides");
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
     }
   }, []);
 
@@ -938,7 +948,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
       </div>
 
       {/* Help Video Guides Section */}
-      <div className="mt-12 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm no-print">
+      <div id="video-guides" className="mt-12 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm no-print">
         <div className="border-b pb-4 mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
           <div className="flex items-center gap-3">
             <div className="bg-emerald-100 p-2.5 rounded-2xl text-emerald-800">
@@ -1021,7 +1031,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
               <iframe
                 src={
                   activeVideoGuide === "login"
-                    ? "https://drive.google.com/file/d/1SwrPj9G6dOPqY8BDuOn3cMJ8FRcsXJgd/preview"
+                    ? "https://drive.google.com/file/d/1yLIiky1BgN4P7hqms6jZnWXm5N8OY0fS/preview"
                     : "https://drive.google.com/file/d/1zJHw6uyXLqMNV8E8lYeqmnHvLxHPiiAp/preview"
                 }
                 className="w-full h-full"

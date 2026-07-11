@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Wallet, LogIn, LogOut, UserCheck, Shield, Menu, X, Globe } from "lucide-react";
+import { Wallet, LogIn, LogOut, UserCheck, Shield, Menu, X, Globe, Video } from "lucide-react";
 import { translations } from "../translations";
 
 export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge, onOpenProfile, lang, onSetLang }) {
@@ -62,6 +62,26 @@ export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge, on
                 <Shield className="w-3.5 h-3.5 text-purple-600" /> {translations[lang].adminPanel}
               </Link>
             )}
+            <Link
+              to="/#video-guides"
+              onClick={(e) => {
+                if (location.pathname === "/") {
+                  e.preventDefault();
+                  const element = document.getElementById("video-guides");
+                  if (element) {
+                    element.scrollIntoView({ behavior: "smooth" });
+                  }
+                }
+              }}
+              className="text-xs uppercase tracking-wider font-extrabold px-4 py-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-1.5"
+            >
+              <Video className="w-3.5 h-3.5 text-emerald-700 animate-pulse" />
+              <span>{lang === "mr" ? "व्हिडिओ मार्गदर्शक" : lang === "hi" ? "वीडियो गाइड" : "Video Guide"}</span>
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
+              </span>
+            </Link>
           </nav>
 
           {/* User Auth Action Items */}
@@ -145,6 +165,27 @@ export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge, on
               }`}
             >
               {translations[lang].home}
+            </Link>
+            <Link
+              to="/#video-guides"
+              onClick={(e) => {
+                setMobileMenuOpen(false);
+                if (location.pathname === "/") {
+                  e.preventDefault();
+                  const element = document.getElementById("video-guides");
+                  if (element) {
+                    element.scrollIntoView({ behavior: "smooth" });
+                  }
+                }
+              }}
+              className="text-xs uppercase tracking-wider font-extrabold px-4 py-2.5 rounded-xl text-slate-500 hover:text-slate-700 flex items-center gap-1.5"
+            >
+              <Video className="w-3.5 h-3.5 text-emerald-700 animate-pulse" />
+              <span>{lang === "mr" ? "व्हिडिओ मार्गदर्शक" : lang === "hi" ? "वीडियो गाइड" : "Video Guide"}</span>
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
+              </span>
             </Link>
             {user && (
               <Link

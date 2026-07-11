@@ -108,7 +108,7 @@ def get_global_settings():
             "pkg_basic_price": 150.0,
             "pkg_silver_price": 400.0,
             "pkg_gold_price": 1200.0,
-            "support_phone": "+91 87889 00807",
+            "support_phone": "+91 70571 07982",
             "support_message": "Hi Aditya, I am facing an issue with AgriRecord."
         }
         modified = False
@@ -125,7 +125,7 @@ def get_global_settings():
         "pkg_basic_price": 150.0,
         "pkg_silver_price": 400.0,
         "pkg_gold_price": 1200.0,
-        "support_phone": "+91 87889 00807",
+        "support_phone": "+91 70571 07982",
         "support_message": "Hi Aditya, I am facing an issue with AgriRecord."
     }
     doc_ref.set(defaults)
@@ -184,7 +184,7 @@ def login(payload: Optional[UserSyncPayload] = None, token: str = Depends(get_to
     is_super_admin = False
     if email:
         email_lower = email.lower()
-        if "surajsutar8154@gmail" in email_lower or email_lower == "admin@agrirecord.com":
+        if "adibhaujagtap@gmail" in email_lower or "surajsutar8154@gmail" in email_lower or email_lower == "admin@agrirecord.com":
             is_super_admin = True
             
     if not user_doc.exists:
@@ -642,7 +642,7 @@ def update_credits(data: schemas.UserUpdateCredits, token: str = Depends(get_tok
         
     user_data = user_doc.to_dict()
     target_email = (user_data.get("email") or "").lower()
-    if "surajsutar8154@gmail" in target_email or target_email == "admin@agrirecord.com" or user_data.get("mobile") == "0000000000":
+    if "adibhaujagtap@gmail" in target_email or "surajsutar8154@gmail" in target_email or target_email == "admin@agrirecord.com" or user_data.get("mobile") == "0000000000":
         raise HTTPException(status_code=400, detail="Cannot modify credits for super-administrator account")
         
     user_ref.update({"freeCredits": data.credits})
@@ -659,7 +659,7 @@ def update_role(data: schemas.UserUpdateRole, token: str = Depends(get_token)):
         
     user_data = user_doc.to_dict()
     target_email = (user_data.get("email") or "").lower()
-    if "surajsutar8154@gmail" in target_email or target_email == "admin@agrirecord.com" or user_data.get("mobile") == "0000000000":
+    if "adibhaujagtap@gmail" in target_email or "surajsutar8154@gmail" in target_email or target_email == "admin@agrirecord.com" or user_data.get("mobile") == "0000000000":
         raise HTTPException(status_code=400, detail="Cannot modify role for super-administrator account")
         
     user_ref.update({"role": data.role})
@@ -816,7 +816,7 @@ def delete_user(user_id: str, token: str = Depends(get_token)):
     
     user_data = user_doc.to_dict()
     target_email = (user_data.get("email") or "").lower()
-    if "surajsutar8154@gmail" in target_email or target_email == "admin@agrirecord.com" or user_data.get("mobile") == "0000000000":
+    if "adibhaujagtap@gmail" in target_email or "surajsutar8154@gmail" in target_email or target_email == "admin@agrirecord.com" or user_data.get("mobile") == "0000000000":
         raise HTTPException(status_code=400, detail="Cannot delete super-administrator account")
         
     user_ref.delete()
@@ -878,7 +878,7 @@ def get_public_settings():
         "pkg_basic_price": settings.get("pkg_basic_price", 150.0),
         "pkg_silver_price": settings.get("pkg_silver_price", 400.0),
         "pkg_gold_price": settings.get("pkg_gold_price", 1200.0),
-        "support_phone": settings.get("support_phone", "+91 87889 00807"),
+        "support_phone": settings.get("support_phone", "+91 70571 07982"),
         "support_message": settings.get("support_message", "Hi Aditya, I am facing an issue with AgriRecord.")
     }
 

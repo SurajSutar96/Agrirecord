@@ -217,6 +217,26 @@ Issued: ${issueDate}`;
 
   const activeScale = forceFullScale ? 1 : scale;
 
+  // Dynamic sizing based on name lengths to prevent layout breaking
+  const hindiNameLength = (data.nameHindi || "").length;
+  const englishNameLength = (data.nameEnglish || "").length;
+
+  const hindiNameClass = 
+    hindiNameLength > 18 ? "text-base font-black text-slate-900 h2c-text-slate-900" : 
+    hindiNameLength > 12 ? "text-lg font-black text-slate-900 h2c-text-slate-900" : 
+    "text-2xl font-black text-slate-900 h2c-text-slate-900";
+
+  const englishNameClass = 
+    englishNameLength > 24 ? "text-[10px] font-bold text-slate-500 h2c-text-slate-500 uppercase tracking-wide" : 
+    englishNameLength > 16 ? "text-xs font-bold text-slate-500 h2c-text-slate-500 uppercase tracking-wide" : 
+    "text-base font-bold text-slate-500 h2c-text-slate-500 uppercase tracking-wide";
+
+  const nameMarginClass = 
+    (hindiNameLength > 12 || englishNameLength > 16) ? "mb-1.5" : "mb-4";
+
+  const gridGapClass = 
+    (hindiNameLength > 12 || englishNameLength > 16) ? "grid grid-cols-2 gap-x-4 gap-y-2" : "grid grid-cols-2 gap-x-4 gap-y-4";
+
   return (
     <div ref={containerRef} className="w-full flex flex-col items-center card-preview-container">
       <div
@@ -306,19 +326,19 @@ Issued: ${issueDate}`;
 
             {/* Middle Data Fields */}
             <div className="flex-1 flex flex-col justify-start pt-1">
-              <div className="mb-4">
-                <span className="text-[11px] font-extrabold uppercase block tracking-widest" style={{ color: theme.primaryColor }}>
+              <div className={nameMarginClass}>
+                <span className="text-[11px] font-extrabold uppercase block tracking-widest leading-none" style={{ color: theme.primaryColor }}>
                   Name / नाम
                 </span>
-                <div className="flex flex-col leading-tight mt-1">
-                  <span className="text-2xl font-black text-slate-900 h2c-text-slate-900">{data.nameHindi}</span>
-                  <span className="text-base font-bold text-slate-500 h2c-text-slate-500 uppercase tracking-wide">
+                <div className="flex flex-col leading-tight mt-0.5">
+                  <span className={hindiNameClass}>{data.nameHindi}</span>
+                  <span className={englishNameClass}>
                     {data.nameEnglish}
                   </span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-x-4 gap-y-4">
+              <div className={gridGapClass}>
                 <div className="flex flex-col">
                   <span className="text-[9px] font-black uppercase leading-tight" style={{ color: theme.primaryColor }}>
                     Date of Birth / जन्म तिथि

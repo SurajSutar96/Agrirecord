@@ -592,7 +592,7 @@ const PrintableInvoice = ({ invoice, user, lang }) => {
           <h4 className="font-extrabold uppercase tracking-widest text-slate-400 text-[10px] mb-2">{translations[lang].platformOwner}</h4>
           <p className="font-black text-slate-800 text-sm">Aditya Jagtap (AgriRecordPro)</p>
           <p className="font-bold text-slate-500 mt-1">Registered Office: Latur, Maharashtra</p>
-          <p className="font-bold text-slate-500">Support WhatsApp: +91 87889 00807</p>
+          <p className="font-bold text-slate-500">Support WhatsApp: +91 70571 07982</p>
         </div>
       </div>
 
@@ -650,7 +650,7 @@ const PrintableInvoice = ({ invoice, user, lang }) => {
       {/* Footer disclaimer */}
       <div className="border-t pt-6 text-center text-[10px] font-semibold text-slate-400 leading-relaxed">
         <p>This is a computer generated invoice and does not require a physical signature.</p>
-        <p className="mt-1">For any queries regarding this transaction, contact support@agrirecord.pro or WhatsApp +91 87889 00807</p>
+        <p className="mt-1">For any queries regarding this transaction, contact support@agrirecord.pro or WhatsApp +91 70571 07982</p>
         <p className="font-bold text-emerald-700 mt-4 uppercase tracking-widest">Thank you / धन्यवाद / आभारी आहोत!</p>
       </div>
     </div>
