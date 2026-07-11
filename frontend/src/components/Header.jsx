@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Wallet, LogIn, LogOut, UserCheck, Shield, Menu, X, Globe, Video } from "lucide-react";
+import { Wallet, LogIn, LogOut, UserCheck, Shield, Menu, X, Globe, Video, Sprout } from "lucide-react";
 import { translations } from "../translations";
 
 export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge, onOpenProfile, lang, onSetLang }) {
@@ -19,8 +19,8 @@ export default function Header({ user, onLogout, onOpenLogin, onOpenRecharge, on
         <div className="flex justify-between items-center h-12 sm:h-14">
           {/* Logo */}
           <div className="flex items-center cursor-pointer hover:opacity-90 transition-opacity" onClick={() => navigate("/")}>
-            <div className="bg-[#064e3b] p-1.5 sm:p-2 rounded-lg sm:rounded-xl mr-2 sm:mr-3 shadow-inner hover-scale">
-              <Landmark className="w-4 h-4 sm:w-5.5 sm:h-5.5 text-[#cddc39]" />
+            <div className="bg-[#064e3b] p-1.5 sm:p-2 rounded-lg sm:rounded-xl mr-2 sm:mr-3 shadow-inner hover-scale flex items-center justify-center">
+              <Sprout className="w-4 h-4 sm:w-5.5 sm:h-5.5 text-[#cddc39]" />
             </div>
             <div className="flex flex-col">
               <h1 className="text-base sm:text-xl font-black italic leading-none tracking-tight text-slate-800">

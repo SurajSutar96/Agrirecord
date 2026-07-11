@@ -127,14 +127,7 @@ export default function VerifyCard({ lang }) {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4">
-        <Loader2 className="w-12 h-12 text-emerald-800 animate-spin" />
-        <p className="text-sm font-black text-slate-500 uppercase tracking-widest animate-pulse">
-          Retrieving Security Records / सुरक्षा रिकॉर्ड प्राप्त किए जा रहे हैं
-        </p>
-      </div>
-    );
+    return <VerifySkeleton />;
   }
 
   if (error) {
@@ -288,6 +281,89 @@ export default function VerifyCard({ lang }) {
         <div ref={pdfRef} className="print-sheet" style={{ width: "210mm", padding: "15mm", backgroundColor: "#ffffff" }}>
           <div className="flex flex-col items-center">
             <CardPreview data={cardData} forceFullScale={true} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VerifySkeleton() {
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-8 animate-pulse">
+      {/* Verification success banner skeleton */}
+      <div className="bg-emerald-50/50 border border-emerald-100 rounded-3xl p-6 flex flex-col sm:flex-row items-center gap-4">
+        <div className="w-12 h-12 rounded-2xl bg-emerald-200 shrink-0"></div>
+        <div className="text-center sm:text-left space-y-2">
+          <div className="h-4.5 w-32 bg-emerald-200 rounded-full"></div>
+          <div className="h-5 w-64 bg-slate-200 rounded-md"></div>
+          <div className="h-3.5 w-48 bg-slate-100 rounded-md"></div>
+        </div>
+      </div>
+
+      {/* Grid: Card Preview & Details Summary */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Side: Card Preview skeleton */}
+        <div className="lg:col-span-8 flex flex-col items-center space-y-6">
+          <div className="w-full bg-white border border-slate-200 rounded-3xl p-6 shadow-xs flex flex-col items-center">
+            {/* Card Skeleton (600px x 380px) */}
+            <div className="w-[600px] h-[380px] rounded-none border-2 border-slate-200 bg-slate-50/50 flex flex-col justify-between p-5 relative overflow-hidden">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-slate-200"></div>
+                  <div className="space-y-2">
+                    <div className="h-5 w-40 bg-slate-200 rounded-md"></div>
+                    <div className="h-3 w-28 bg-slate-200 rounded-md"></div>
+                  </div>
+                </div>
+                <div className="w-12 h-12 rounded-lg bg-slate-200"></div>
+              </div>
+
+              <div className="flex gap-5 mt-2 flex-1">
+                <div className="w-[110px] h-[135px] border border-slate-200 bg-slate-200 rounded-xl"></div>
+                <div className="flex-1 grid grid-cols-2 gap-x-4 gap-y-3">
+                  {[1, 2, 3, 4].map((x) => (
+                    <div key={x} className="space-y-1">
+                      <div className="h-3 w-16 bg-slate-200 rounded-md"></div>
+                      <div className="h-4 w-28 bg-slate-200 rounded-md"></div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-col items-center gap-1.5 justify-center">
+                  <div className="w-[85px] h-[85px] bg-slate-200 rounded-xl"></div>
+                  <div className="h-3 w-16 bg-slate-200 rounded-md"></div>
+                </div>
+              </div>
+
+              <div className="h-12 w-full bg-slate-200 -mx-5 -mb-5 flex items-center justify-center">
+                <div className="h-5 w-48 bg-slate-300 rounded-md"></div>
+              </div>
+            </div>
+
+            {/* Actions panel buttons skeleton */}
+            <div className="flex gap-4 mt-6 w-full">
+              <div className="flex-1 h-12 bg-slate-200 rounded-xl"></div>
+              <div className="h-12 w-24 bg-slate-200 rounded-xl"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Details Summary skeleton */}
+        <div className="lg:col-span-4 bg-white border border-slate-200 rounded-3xl p-6 space-y-6 shadow-xs">
+          <div className="space-y-2">
+            <div className="h-3 w-36 bg-slate-200 rounded-md"></div>
+            <div className="h-2.5 w-24 bg-slate-100 rounded-md"></div>
+          </div>
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map((item) => (
+              <div key={item} className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-slate-100 shrink-0"></div>
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3.5 w-32 bg-slate-200 rounded-md"></div>
+                  <div className="h-3 w-20 bg-slate-100 rounded-md"></div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
