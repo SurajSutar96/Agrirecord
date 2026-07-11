@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   Users, CreditCard, Shield, Landmark, Loader2, Save, Trash2, Mail, Key,
   IndianRupee, Percent, Activity, Search, UserMinus, Plus
@@ -438,8 +438,56 @@ export default function AdminPanel({ user, onAuthSuccess }) {
       </div>
 
       {loading ? (
-        <div className="min-h-[300px] flex items-center justify-center">
-          <Loader2 className="w-10 h-10 text-emerald-700 animate-spin" />
+        <div className="space-y-8 animate-pulse select-none no-print">
+          {/* Key Metrics Cards grid skeleton */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="premium-card rounded-3xl p-6 bg-white space-y-4 animate-pulse">
+                <div className="flex justify-between items-center">
+                  <div className="h-3 bg-slate-200 rounded w-24"></div>
+                  <div className="w-10 h-10 bg-slate-100 rounded-2xl"></div>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-8 bg-slate-200 rounded-lg w-2/3"></div>
+                  <div className="h-3 bg-slate-100 rounded w-1/2"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Analytics Charts Grid skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-white border border-slate-200 rounded-3xl p-5 space-y-4 animate-pulse">
+                <div className="space-y-2">
+                  <div className="h-3.5 bg-slate-200 rounded w-1/3"></div>
+                  <div className="h-2.5 bg-slate-100 rounded w-1/2"></div>
+                </div>
+                <div className="h-44 bg-slate-50 rounded-2xl w-full"></div>
+              </div>
+            ))}
+          </div>
+
+          {/* Table skeleton */}
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-6 animate-pulse">
+            <div className="flex justify-between items-center flex-wrap gap-4 border-b pb-4 border-slate-100">
+              <div className="space-y-2">
+                <div className="h-4 bg-slate-200 rounded w-48"></div>
+                <div className="h-3 bg-slate-100 rounded w-72"></div>
+              </div>
+              <div className="w-24 h-9 bg-slate-200 rounded-xl"></div>
+            </div>
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
+                  <div className="h-4 bg-slate-200 rounded w-1/4"></div>
+                  <div className="h-4 bg-slate-200 rounded w-1/5"></div>
+                  <div className="h-4 bg-slate-100 rounded w-1/6"></div>
+                  <div className="h-4 bg-slate-100 rounded w-12"></div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       ) : tab === "overview" ? (
         <div className="space-y-8 animate-in fade-in duration-300">
@@ -499,9 +547,10 @@ export default function AdminPanel({ user, onAuthSuccess }) {
           </div>
 
           {/* Analytics Charts Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <DailyRevenueChart data={stats.revenueChartData || []} />
             <DailyCardsChart data={stats.cardsChartData || []} />
+            <DailyUsersChart data={stats.usersChartData || []} />
           </div>
 
           {/* Recent Checkout logs table */}
@@ -1079,152 +1128,237 @@ const Pagination = ({ currentPage, totalItems, itemsPerPage, onPageChange }) => 
 };
 
 const DailyRevenueChart = ({ data }) => {
-  if (!data || data.length === 0) return null;
-  const maxAmount = Math.max(...data.map(d => d.amount), 1);
-  const chartHeight = 120;
-  const barWidth = 35;
-  const gap = 15;
-  const paddingLeft = 40;
-  const paddingTop = 20;
-  const totalWidth = data.length * (barWidth + gap) + paddingLeft;
+  const canvasRef = useRef(null);
+  const chartInstanceRef = useRef(null);
+
+  useEffect(() => {
+    if (!canvasRef.current || !data || data.length === 0) return;
+
+    if (chartInstanceRef.current) {
+      chartInstanceRef.current.destroy();
+    }
+
+    const ctx = canvasRef.current.getContext("2d");
+    const labels = data.map(d => d.date.split("-").slice(1).join("/"));
+    const values = data.map(d => d.amount);
+
+    chartInstanceRef.current = new window.Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "Revenue (₹)",
+          data: values,
+          borderColor: "#10b981",
+          backgroundColor: "rgba(16, 185, 129, 0.08)",
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.35,
+          pointBackgroundColor: "#10b981",
+          pointBorderColor: "#ffffff",
+          pointBorderWidth: 1.5,
+          pointRadius: 4,
+          pointHoverRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            grid: { color: "#f8fafc" },
+            ticks: {
+              font: { weight: "600", size: 9 },
+              color: "#94a3b8"
+            }
+          },
+          x: {
+            grid: { display: false },
+            ticks: {
+              font: { weight: "600", size: 9 },
+              color: "#94a3b8"
+            }
+          }
+        }
+      }
+    });
+
+    return () => {
+      if (chartInstanceRef.current) {
+        chartInstanceRef.current.destroy();
+      }
+    };
+  }, [data]);
 
   return (
-    <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs animate-in fade-in duration-300">
-      <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">7-Day Revenue Trend (₹)</h4>
-      <div className="overflow-x-auto">
-        <svg width="100%" height={chartHeight + 50} viewBox={`0 0 ${totalWidth} ${chartHeight + 50}`} className="min-w-[320px]">
-          {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
-            const y = paddingTop + (1 - ratio) * chartHeight;
-            return (
-              <g key={idx}>
-                <line x1={paddingLeft} y1={y} x2={totalWidth} y2={y} stroke="#f1f5f9" strokeWidth="1" />
-                <text x={paddingLeft - 8} y={y + 3} textAnchor="end" className="fill-slate-400 text-[9px] font-bold">
-                  ₹{Math.round(ratio * maxAmount)}
-                </text>
-              </g>
-            );
-          })}
-          
-          {data.map((d, index) => {
-            const barHeight = (d.amount / maxAmount) * chartHeight;
-            const x = paddingLeft + index * (barWidth + gap);
-            const y = chartHeight + paddingTop - barHeight;
-            const dateLabel = d.date.split("-").slice(1).join("/");
-            
-            return (
-              <g key={index} className="group cursor-pointer">
-                <rect
-                  x={x}
-                  y={y}
-                  width={barWidth}
-                  height={barHeight}
-                  fill="url(#emeraldGradient)"
-                  rx="6"
-                  className="transition-all duration-300 hover:fill-[#085a44]"
-                />
-                <text
-                  x={x + barWidth / 2}
-                  y={y - 6}
-                  textAnchor="middle"
-                  className="fill-emerald-800 text-[10px] font-black opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  ₹{d.amount}
-                </text>
-                <text
-                  x={x + barWidth / 2}
-                  y={chartHeight + paddingTop + 18}
-                  textAnchor="middle"
-                  className="fill-slate-400 text-[9px] font-bold"
-                >
-                  {dateLabel}
-                </text>
-              </g>
-            );
-          })}
-          
-          <defs>
-            <linearGradient id="emeraldGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#10b981" />
-              <stop offset="100%" stopColor="#047857" />
-            </linearGradient>
-          </defs>
-        </svg>
+    <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs flex flex-col justify-between animate-in fade-in duration-300">
+      <div>
+        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">7-Day Revenue Trend</h4>
+        <span className="text-[10px] font-bold text-emerald-600 block mb-4 uppercase tracking-wide">Daily wallet recharges (₹)</span>
+      </div>
+      <div className="h-44 w-full relative">
+        <canvas ref={canvasRef}></canvas>
       </div>
     </div>
   );
 };
 
 const DailyCardsChart = ({ data }) => {
-  if (!data || data.length === 0) return null;
-  const maxCount = Math.max(...data.map(d => d.count), 1);
-  const chartHeight = 120;
-  const barWidth = 35;
-  const gap = 15;
-  const paddingLeft = 40;
-  const paddingTop = 20;
-  const totalWidth = data.length * (barWidth + gap) + paddingLeft;
+  const canvasRef = useRef(null);
+  const chartInstanceRef = useRef(null);
+
+  useEffect(() => {
+    if (!canvasRef.current || !data || data.length === 0) return;
+
+    if (chartInstanceRef.current) {
+      chartInstanceRef.current.destroy();
+    }
+
+    const ctx = canvasRef.current.getContext("2d");
+    const labels = data.map(d => d.date.split("-").slice(1).join("/"));
+    const values = data.map(d => d.count);
+
+    chartInstanceRef.current = new window.Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "Cards",
+          data: values,
+          borderColor: "#2563eb",
+          backgroundColor: "rgba(37, 99, 235, 0.08)",
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.35,
+          pointBackgroundColor: "#2563eb",
+          pointBorderColor: "#ffffff",
+          pointBorderWidth: 1.5,
+          pointRadius: 4,
+          pointHoverRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            grid: { color: "#f8fafc" },
+            ticks: {
+              font: { weight: "600", size: 9 },
+              color: "#94a3b8"
+            }
+          },
+          x: {
+            grid: { display: false },
+            ticks: {
+              font: { weight: "600", size: 9 },
+              color: "#94a3b8"
+            }
+          }
+        }
+      }
+    });
+
+    return () => {
+      if (chartInstanceRef.current) {
+        chartInstanceRef.current.destroy();
+      }
+    };
+  }, [data]);
 
   return (
-    <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs animate-in fade-in duration-300">
-      <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">7-Day Card Volume Trend</h4>
-      <div className="overflow-x-auto">
-        <svg width="100%" height={chartHeight + 50} viewBox={`0 0 ${totalWidth} ${chartHeight + 50}`} className="min-w-[320px]">
-          {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
-            const y = paddingTop + (1 - ratio) * chartHeight;
-            return (
-              <g key={idx}>
-                <line x1={paddingLeft} y1={y} x2={totalWidth} y2={y} stroke="#f1f5f9" strokeWidth="1" />
-                <text x={paddingLeft - 8} y={y + 3} textAnchor="end" className="fill-slate-400 text-[9px] font-bold">
-                  {Math.round(ratio * maxCount)}
-                </text>
-              </g>
-            );
-          })}
-          
-          {data.map((d, index) => {
-            const barHeight = (d.count / maxCount) * chartHeight;
-            const x = paddingLeft + index * (barWidth + gap);
-            const y = chartHeight + paddingTop - barHeight;
-            const dateLabel = d.date.split("-").slice(1).join("/");
-            
-            return (
-              <g key={index} className="group cursor-pointer">
-                <rect
-                  x={x}
-                  y={y}
-                  width={barWidth}
-                  height={barHeight}
-                  fill="url(#blueGradient)"
-                  rx="6"
-                  className="transition-all duration-300 hover:fill-blue-800"
-                />
-                <text
-                  x={x + barWidth / 2}
-                  y={y - 6}
-                  textAnchor="middle"
-                  className="fill-blue-800 text-[10px] font-black opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  {d.count}
-                </text>
-                <text
-                  x={x + barWidth / 2}
-                  y={chartHeight + paddingTop + 18}
-                  textAnchor="middle"
-                  className="fill-slate-400 text-[9px] font-bold"
-                >
-                  {dateLabel}
-                </text>
-              </g>
-            );
-          })}
-          
-          <defs>
-            <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#3b82f6" />
-              <stop offset="100%" stopColor="#1d4ed8" />
-            </linearGradient>
-          </defs>
-        </svg>
+    <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs flex flex-col justify-between animate-in fade-in duration-300">
+      <div>
+        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">7-Day Card Volume Trend</h4>
+        <span className="text-[10px] font-bold text-blue-600 block mb-4 uppercase tracking-wide">Kisan cards printed daily</span>
+      </div>
+      <div className="h-44 w-full relative">
+        <canvas ref={canvasRef}></canvas>
+      </div>
+    </div>
+  );
+};
+
+const DailyUsersChart = ({ data }) => {
+  const canvasRef = useRef(null);
+  const chartInstanceRef = useRef(null);
+
+  useEffect(() => {
+    if (!canvasRef.current || !data || data.length === 0) return;
+
+    if (chartInstanceRef.current) {
+      chartInstanceRef.current.destroy();
+    }
+
+    const ctx = canvasRef.current.getContext("2d");
+    const labels = data.map(d => d.date.split("-").slice(1).join("/"));
+    const values = data.map(d => d.count);
+
+    chartInstanceRef.current = new window.Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "Users",
+          data: values,
+          borderColor: "#8b5cf6",
+          backgroundColor: "rgba(139, 92, 246, 0.08)",
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.35,
+          pointBackgroundColor: "#8b5cf6",
+          pointBorderColor: "#ffffff",
+          pointBorderWidth: 1.5,
+          pointRadius: 4,
+          pointHoverRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            grid: { color: "#f8fafc" },
+            ticks: {
+              font: { weight: "600", size: 9 },
+              color: "#94a3b8"
+            }
+          },
+          x: {
+            grid: { display: false },
+            ticks: {
+              font: { weight: "600", size: 9 },
+              color: "#94a3b8"
+            }
+          }
+        }
+      }
+    });
+
+    return () => {
+      if (chartInstanceRef.current) {
+        chartInstanceRef.current.destroy();
+      }
+    };
+  }, [data]);
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs flex flex-col justify-between animate-in fade-in duration-300">
+      <div>
+        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">7-Day User Growth</h4>
+        <span className="text-[10px] font-bold text-purple-600 block mb-4 uppercase tracking-wide">Operator signups daily</span>
+      </div>
+      <div className="h-44 w-full relative">
+        <canvas ref={canvasRef}></canvas>
       </div>
     </div>
   );

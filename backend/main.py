@@ -743,7 +743,8 @@ def get_admin_stats(token: str = Depends(get_token)):
     check_admin(token)
     
     user_docs = db.collection("users").stream()
-    total_users = sum(1 for _ in user_docs)
+    users_list_local = [u.to_dict() for u in user_docs]
+    total_users = len(users_list_local)
     
     card_docs = db.collection("cards").stream()
     cards_list_local = [c.to_dict() for c in card_docs]
@@ -783,11 +784,13 @@ def get_admin_stats(token: str = Depends(get_token)):
     today = dt_module.date.today()
     daily_revenue = {}
     daily_cards = {}
+    daily_users = {}
     for i in range(7):
         d = today - dt_module.timedelta(days=i)
         date_str = d.strftime("%Y-%m-%d")
         daily_revenue[date_str] = 0
         daily_cards[date_str] = 0
+        daily_users[date_str] = 0
         
     for o in orders:
         if o.get("status") == "PAID":
@@ -803,9 +806,17 @@ def get_admin_stats(token: str = Depends(get_token)):
             date_str = created_dt.strftime("%Y-%m-%d")
             if date_str in daily_cards:
                 daily_cards[date_str] += 1
+
+    for u in users_list_local:
+        created_dt = ensure_datetime(u.get("createdAt"))
+        if created_dt:
+            date_str = created_dt.strftime("%Y-%m-%d")
+            if date_str in daily_users:
+                daily_users[date_str] += 1
                 
     revenue_chart_data = [{"date": k, "amount": daily_revenue[k]} for k in sorted(daily_revenue.keys())]
     cards_chart_data = [{"date": k, "count": daily_cards[k]} for k in sorted(daily_cards.keys())]
+    users_chart_data = [{"date": k, "count": daily_users[k]} for k in sorted(daily_users.keys())]
         
     return {
         "totalUsers": total_users,
@@ -814,7 +825,8 @@ def get_admin_stats(token: str = Depends(get_token)):
         "successRate": success_rate,
         "recentOrders": orders_list,
         "revenueChartData": revenue_chart_data,
-        "cardsChartData": cards_chart_data
+        "cardsChartData": cards_chart_data,
+        "usersChartData": users_chart_data
     }
 
 @app.delete("/api/admin/cards/{card_id}")

@@ -122,6 +122,26 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleTransliterate = async (e) => {
+    const text = e.target.value.trim();
+    if (!text) return;
+    const itc = formData.state === "Maharashtra" ? "mr-t-i0-und" : "hi-t-i0-und";
+    try {
+      const response = await fetch(
+        `https://inputtools.google.com/request?text=${encodeURIComponent(text)}&itc=${itc}&num=1&cp=0&cs=1&ie=utf-8&oe=utf-8&app=demopage`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data[0] === "SUCCESS" && data[1]?.[0]?.suggestion?.[0]) {
+          const transliteratedText = data[1][0].suggestion[0];
+          setFormData(prev => ({ ...prev, nameHindi: transliteratedText }));
+        }
+      }
+    } catch (err) {
+      console.error("Transliteration failed:", err);
+    }
+  };
+
   // State selection updates district list automatically
   const handleStateChange = (e) => {
     const selectedState = e.target.value;
@@ -651,6 +671,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
                     name="nameEnglish"
                     value={formData.nameEnglish}
                     onChange={handleInputChange}
+                    onBlur={handleTransliterate}
                     placeholder={translations[lang].nameEngPlaceholder}
                     className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-sm font-bold text-slate-700 uppercase"
                   />
