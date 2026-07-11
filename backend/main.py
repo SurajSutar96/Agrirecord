@@ -893,9 +893,9 @@ def get_admin_transactions(token: str = Depends(get_token), page: int = 1, limit
     return {"items": sliced_orders, "total": total_items}
 
 @app.get("/api/admin/logs")
-def get_admin_logs(token: str = Depends(get_token), limit: int = 50):
+def get_admin_logs(token: str = Depends(get_token), page: int = 1, limit: int = 10):
     check_admin(token)
-    logs_ref = db.collection("admin_logs").order_by("timestamp", direction="DESCENDING").limit(limit).stream()
+    logs_ref = db.collection("admin_logs").order_by("timestamp", direction="DESCENDING").stream()
     logs = []
     for doc in logs_ref:
         d = doc.to_dict()
@@ -903,7 +903,10 @@ def get_admin_logs(token: str = Depends(get_token), limit: int = 50):
         if "timestamp" in d:
             d["timestamp"] = ensure_datetime(d["timestamp"]).strftime("%Y-%m-%d %H:%M:%S")
         logs.append(d)
-    return logs
+    
+    total_items = len(logs)
+    sliced_logs = logs[(page - 1) * limit : page * limit]
+    return {"items": sliced_logs, "total": total_items}
 
 @app.get("/api/settings")
 def get_public_settings():
@@ -916,6 +919,25 @@ def get_public_settings():
         "support_phone": settings.get("support_phone", "+91 70571 07982"),
         "support_message": settings.get("support_message", "Hi Aditya, I am facing an issue with AgriRecord.")
     }
+
+@app.get("/api/public/transliterate")
+def transliterate(text: str, lang: str = "mr"):
+    import urllib.parse
+    import requests
+    
+    itc = "mr-t-i0-und" if lang == "mr" else "hi-t-i0-und"
+    url = f"https://inputtools.google.com/request?text={urllib.parse.quote(text)}&itc={itc}&num=1&cp=0&cs=1&ie=utf-8&oe=utf-8&app=demopage"
+    
+    try:
+        res = requests.get(url, timeout=5)
+        if res.status_code == 200:
+            data = res.json()
+            if data[0] == "SUCCESS" and len(data[1]) > 0 and len(data[1][0]["suggestion"]) > 0:
+                return {"transliterated": data[1][0]["suggestion"][0]}
+    except Exception as e:
+        print("Transliteration api error:", e)
+        
+    return {"transliterated": text}
 
 @app.get("/api/admin/settings")
 def get_settings(token: str = Depends(get_token)):

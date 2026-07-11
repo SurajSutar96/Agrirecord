@@ -125,16 +125,13 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
   const handleTransliterate = async (e) => {
     const text = e.target.value.trim();
     if (!text) return;
-    const itc = formData.state === "Maharashtra" ? "mr-t-i0-und" : "hi-t-i0-und";
+    const lang = formData.state === "Maharashtra" ? "mr" : "hi";
     try {
-      const response = await fetch(
-        `https://inputtools.google.com/request?text=${encodeURIComponent(text)}&itc=${itc}&num=1&cp=0&cs=1&ie=utf-8&oe=utf-8&app=demopage`
-      );
+      const response = await fetch(`/api/public/transliterate?text=${encodeURIComponent(text)}&lang=${lang}`);
       if (response.ok) {
         const data = await response.json();
-        if (data[0] === "SUCCESS" && data[1]?.[0]?.suggestion?.[0]) {
-          const transliteratedText = data[1][0].suggestion[0];
-          setFormData(prev => ({ ...prev, nameHindi: transliteratedText }));
+        if (data.transliterated) {
+          setFormData(prev => ({ ...prev, nameHindi: data.transliterated }));
         }
       }
     } catch (err) {

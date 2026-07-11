@@ -17,10 +17,12 @@ export default function AdminPanel({ user, onAuthSuccess }) {
   const [txPage, setTxPage] = useState(1);
   const [usersPage, setUsersPage] = useState(1);
   const [cardsPage, setCardsPage] = useState(1);
+  const [logsPage, setLogsPage] = useState(1);
 
   const [usersTotal, setUsersTotal] = useState(0);
   const [cardsTotal, setCardsTotal] = useState(0);
   const [txTotal, setTxTotal] = useState(0);
+  const [logsTotal, setLogsTotal] = useState(0);
   const [transactions, setTransactions] = useState([]);
   const [adminLogs, setAdminLogs] = useState([]);
   const [globalSettings, setGlobalSettings] = useState({
@@ -39,6 +41,7 @@ export default function AdminPanel({ user, onAuthSuccess }) {
     setTxPage(1);
     setUsersPage(1);
     setCardsPage(1);
+    setLogsPage(1);
   }, [tab, searchTerm, txStatusFilter]);
 
   const [stats, setStats] = useState({
@@ -125,10 +128,11 @@ export default function AdminPanel({ user, onAuthSuccess }) {
           setCardsTotal(data.total || 0);
         }
       } else if (tab === "logs") {
-        const response = await fetch(`/api/admin/logs?token=${token}&limit=50`);
+        const response = await fetch(`/api/admin/logs?token=${token}&page=${logsPage}&limit=${itemsPerPage}`);
         const data = await response.json();
         if (response.ok) {
-          setAdminLogs(data || []);
+          setAdminLogs(data.items || []);
+          setLogsTotal(data.total || 0);
         }
       } else if (tab === "settings") {
         const SETTINGS_CACHE_KEY = "agri_settings_cache";
@@ -168,7 +172,7 @@ export default function AdminPanel({ user, onAuthSuccess }) {
     if (user && user.role === "Admin") {
       fetchAdminData();
     }
-  }, [user, tab, txPage, usersPage, cardsPage, txStatusFilter, searchTerm]);
+  }, [user, tab, txPage, usersPage, cardsPage, logsPage, txStatusFilter, searchTerm]);
 
   const handleUpdateCredits = async (userId) => {
     const token = localStorage.getItem("agri_record_token");
@@ -376,6 +380,19 @@ export default function AdminPanel({ user, onAuthSuccess }) {
       window.showToast("Failed to export cards", "error");
     }
   };
+  const handleExportLogs = async () => {
+    const token = localStorage.getItem("agri_record_token");
+    try {
+      const res = await fetch(`/api/admin/logs?token=${token}&page=1&limit=5000`);
+      const data = await res.json();
+      if (res.ok && data.items) {
+        exportToCSV(data.items, ["timestamp", "admin_name", "action_type", "description"], "activity_logs_report.csv");
+      }
+    } catch (e) {
+      console.error(e);
+      window.showToast("Failed to export activity logs", "error");
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 no-print transition-all duration-300">
@@ -425,7 +442,7 @@ export default function AdminPanel({ user, onAuthSuccess }) {
             tab === "logs" ? "border-emerald-800 text-emerald-800" : "border-transparent text-slate-400 hover:text-slate-600"
           }`}
         >
-          <Shield className="w-4 h-4" /> Activity Logs
+          <Shield className="w-4 h-4" /> Activity Logs ({logsTotal})
         </button>
         <button
           onClick={() => { setTab("settings"); setSearchTerm(""); }}
@@ -902,6 +919,24 @@ export default function AdminPanel({ user, onAuthSuccess }) {
             </div>
           </div>
 
+          {/* Logs search & export controls */}
+          <div className="flex justify-between items-center gap-4 bg-white border border-slate-200 rounded-2xl px-6 py-3 shadow-xs flex-wrap select-none">
+            <div className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+              System Audit Trail
+            </div>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleExportLogs}
+                className="px-3.5 py-2 bg-emerald-800 hover:bg-emerald-950 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-xs cursor-pointer hover-scale animate-in fade-in duration-200"
+              >
+                Export CSV
+              </button>
+              <div className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                Total Logs: {logsTotal}
+              </div>
+            </div>
+          </div>
+
           <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -943,6 +978,13 @@ export default function AdminPanel({ user, onAuthSuccess }) {
                 </tbody>
               </table>
             </div>
+
+            <Pagination
+              currentPage={logsPage}
+              totalItems={logsTotal}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setLogsPage}
+            />
           </div>
         </div>
       ) : (
