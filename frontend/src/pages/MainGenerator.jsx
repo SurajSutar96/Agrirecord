@@ -70,8 +70,8 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
   const [step, setStep] = useState(1);
   const [activeVideoGuide, setActiveVideoGuide] = useState(null);
 
-  // Form is locked when user is not logged in OR has 0 credits (and is not admin)
-  const isFormLocked = !user || (user.role !== "Admin" && user.freeCredits === 0);
+  // Form is locked ONLY when user is not logged in
+  const isFormLocked = !user;
 
   // Generate random Farmer ID on mount or state change
   useEffect(() => {
