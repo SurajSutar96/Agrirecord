@@ -131,10 +131,30 @@ export default function AdminPanel({ user, onAuthSuccess }) {
           setAdminLogs(data || []);
         }
       } else if (tab === "settings") {
+        const SETTINGS_CACHE_KEY = "agri_settings_cache";
+        const SETTINGS_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+        // Show cached settings immediately if fresh
+        try {
+          const cached = localStorage.getItem(SETTINGS_CACHE_KEY);
+          if (cached) {
+            const { data: cachedSettings, ts } = JSON.parse(cached);
+            if (cachedSettings && Date.now() - ts < SETTINGS_TTL_MS) {
+              setGlobalSettings(cachedSettings);
+              setLoading(false); // no spinner needed, cache hit
+            }
+          }
+        } catch (e) { /* ignore */ }
+
+        // Always refresh from server in background
         const response = await fetch(`/api/admin/settings?token=${token}`);
         const data = await response.json();
         if (response.ok) {
           setGlobalSettings(data);
+          // Update cache
+          try {
+            localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify({ data, ts: Date.now() }));
+          } catch (e) { /* ignore */ }
         }
       }
     } catch (err) {
@@ -909,6 +929,9 @@ export default function AdminPanel({ user, onAuthSuccess }) {
                 const resData = await response.json();
                 if (response.ok) {
                   window.showToast("System settings saved successfully!", "success");
+                  try {
+                    localStorage.removeItem("agri_settings_cache");
+                  } catch (err) {}
                 } else {
                   window.showToast(resData.detail || "Failed to save settings", "error");
                 }

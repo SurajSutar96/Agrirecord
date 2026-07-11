@@ -5,6 +5,7 @@ import MainGenerator from "./pages/MainGenerator";
 import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel";
 import PolicyPage from "./pages/PolicyPage";
+import VerifyCard from "./pages/VerifyCard";
 import { RechargeModal, ProfileModal } from "./components/Modals";
 import { Landmark, HelpCircle, Mail, ShieldAlert, FileText, CreditCard } from "lucide-react";
 import { auth, googleProvider, signInWithPopup } from "./firebase";
@@ -179,6 +180,10 @@ export default function App() {
             <Route 
               path="/admin" 
               element={<AdminPanel user={user} onAuthSuccess={handleAuthSuccess} />} 
+            />
+            <Route 
+              path="/verify/:cardId" 
+              element={<VerifyCard lang={lang} />} 
             />
             <Route path="/:policyType" element={<PolicyPage />} />
           </Routes>

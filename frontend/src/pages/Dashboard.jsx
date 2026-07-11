@@ -58,6 +58,22 @@ export default function Dashboard({ user, lang }) {
   const fetchCards = async () => {
     if (!user) return;
     const token = localStorage.getItem("agri_record_token");
+    const cacheKey = `agri_cards_cache_${user.uid}`;
+
+    // Show cached data instantly while fetching fresh
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const { data: cachedCards, ts } = JSON.parse(cached);
+        const ageMs = Date.now() - ts;
+        if (cachedCards && ageMs < 10 * 60 * 1000) { // use cache if under 10 minutes old
+          setCards(cachedCards);
+          if (cachedCards.length > 0) setSelectedCard(cachedCards[0]);
+          setLoading(false); // hide spinner immediately
+        }
+      }
+    } catch (e) { /* ignore cache read errors */ }
+
     try {
       const response = await fetch(`/api/cards/my-cards?token=${token}`);
       const data = await response.json();
@@ -66,6 +82,10 @@ export default function Dashboard({ user, lang }) {
         if (data.length > 0) {
           setSelectedCard(data[0]);
         }
+        // Update cache with fresh data
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify({ data, ts: Date.now() }));
+        } catch (e) { /* ignore cache write errors */ }
       }
     } catch (err) {
       console.error("Failed to fetch cards:", err);

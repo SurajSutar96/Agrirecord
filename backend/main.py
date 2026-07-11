@@ -384,6 +384,29 @@ def delete_own_card(card_id: str, token: str = Depends(get_token)):
     card_ref.delete()
     return {"success": True}
 
+# PUBLIC ENDPOINT FOR CARD VERIFICATION
+@app.get("/api/public/cards/{card_id}", response_model=schemas.CardResponse)
+def get_public_card(card_id: str):
+    card_ref = db.collection("cards").document(card_id)
+    card_doc = card_ref.get()
+    if not card_doc.exists:
+        # Check if the query is by farmerId instead of doc ID
+        docs = db.collection("cards").where("farmerId", "==", card_id).limit(1).stream()
+        found = False
+        card_data = None
+        for doc in docs:
+            card_data = doc.to_dict()
+            found = True
+            break
+        if not found:
+            raise HTTPException(status_code=404, detail="Kisan Card not found / किसान कार्ड नहीं मिला")
+        card_data["createdAt"] = ensure_datetime(card_data.get("createdAt"))
+        return card_data
+    
+    card_data = card_doc.to_dict()
+    card_data["createdAt"] = ensure_datetime(card_data.get("createdAt"))
+    return card_data
+
 # PAYMENT ENDPOINTS
 @app.post("/api/create-cashfree-order")
 def create_cashfree_order(order_data: schemas.OrderCreate):

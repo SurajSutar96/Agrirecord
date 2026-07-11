@@ -191,13 +191,7 @@ export default function CardPreview({ data, forceFullScale = false, previewRef, 
     .map((l, i) => `P${i + 1}: ${l.district}/${l.subDistrict}, Khata:${l.mOwnerNo}, Khasra:${l.khasra}, Area:${l.area}`)
     .join(" | ");
 
-  const qrText = `Name: ${data.nameEnglish}
-ID: ${data.farmerId}
-DOB: ${data.dob}
-Mob: ${data.mobile}
-Addr: ${data.address}
-Land: ${landSummary}
-Issued: ${issueDate}`;
+  const qrText = `${window.location.origin}/verify/${data.id || data.farmerId}`;
 
   // Helper for dynamic table sizes based on rows count
   const getTableSizeStyles = (count) => {
@@ -222,20 +216,20 @@ Issued: ${issueDate}`;
   const englishNameLength = (data.nameEnglish || "").length;
 
   const hindiNameClass = 
-    hindiNameLength > 18 ? "text-base font-black text-slate-900 h2c-text-slate-900" : 
-    hindiNameLength > 12 ? "text-lg font-black text-slate-900 h2c-text-slate-900" : 
-    "text-2xl font-black text-slate-900 h2c-text-slate-900";
+    hindiNameLength > 15 ? "text-[19px] font-black text-slate-900 h2c-text-slate-900" : 
+    hindiNameLength > 10 ? "text-[22px] font-black text-slate-900 h2c-text-slate-900" : 
+    "text-[28px] font-black text-slate-900 h2c-text-slate-900";
 
   const englishNameClass = 
-    englishNameLength > 24 ? "text-[10px] font-bold text-slate-500 h2c-text-slate-500 uppercase tracking-wide" : 
-    englishNameLength > 16 ? "text-xs font-bold text-slate-500 h2c-text-slate-500 uppercase tracking-wide" : 
-    "text-base font-bold text-slate-500 h2c-text-slate-500 uppercase tracking-wide";
+    englishNameLength > 20 ? "text-[13px] font-bold text-slate-500 h2c-text-slate-500 uppercase tracking-wide" : 
+    englishNameLength > 14 ? "text-[15px] font-bold text-slate-500 h2c-text-slate-500 uppercase tracking-wide" : 
+    "text-lg font-bold text-slate-500 h2c-text-slate-500 uppercase tracking-wide";
 
   const nameMarginClass = 
-    (hindiNameLength > 12 || englishNameLength > 16) ? "mb-1.5" : "mb-4";
+    (hindiNameLength > 10 || englishNameLength > 14) ? "mb-2.5" : "mb-4";
 
   const gridGapClass = 
-    (hindiNameLength > 12 || englishNameLength > 16) ? "grid grid-cols-2 gap-x-4 gap-y-2" : "grid grid-cols-2 gap-x-4 gap-y-4";
+    (hindiNameLength > 10 || englishNameLength > 14) ? "grid grid-cols-2 gap-x-4 gap-y-3" : "grid grid-cols-2 gap-x-4 gap-y-4";
 
   return (
     <div ref={containerRef} className="w-full flex flex-col items-center card-preview-container">
@@ -369,9 +363,15 @@ Issued: ${issueDate}`;
             </div>
 
             {/* Right QR Code & Issue Date */}
-            <div className="flex flex-col items-end justify-between py-1" style={{ height: "208px", boxSizing: "border-box" }}>
-              <div className="bg-white h2c-bg-white p-1.5 rounded-xl shadow-md border border-gray-100 h2c-border-gray-100 mt-1">
-                <QRCodeCanvas value={qrText} size={85} level="M" includeMargin={false} />
+            <div className="flex flex-col items-center justify-between py-1" style={{ height: "208px", boxSizing: "border-box" }}>
+              <div className="flex flex-col items-center gap-1 mt-1">
+                <div className="bg-white h2c-bg-white p-1.5 rounded-xl shadow-md border border-gray-100 h2c-border-gray-100">
+                  <QRCodeCanvas value={qrText} size={80} level="M" includeMargin={false} />
+                </div>
+                <div className="flex flex-col items-center leading-none mt-0.5">
+                  <span className="text-[7.2px] font-black text-slate-500 uppercase tracking-wider">Scan to Verify Card</span>
+                  <span className="text-[6.8px] font-extrabold text-slate-500 mt-0.5">सत्यापित करने के लिए स्कैन करें</span>
+                </div>
               </div>
               <div className="flex items-center gap-1.5 pb-1">
                 <span className="text-[9px] font-black text-slate-400 h2c-text-slate-400 uppercase tracking-widest">Issue Date:</span>
