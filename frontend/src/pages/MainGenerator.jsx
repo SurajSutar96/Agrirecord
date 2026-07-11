@@ -1018,15 +1018,15 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
 
       {/* Video Guide Modal */}
       {activeVideoGuide && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-[9999] no-print animate-in fade-in duration-200">
-          <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 max-w-4xl w-full flex flex-col gap-4 relative animate-in fade-in zoom-in duration-200">
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-[9999] no-print animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 max-w-4xl w-full max-h-[95vh] overflow-y-auto flex flex-col gap-4 relative animate-in fade-in zoom-in duration-200">
             <button
               onClick={() => setActiveVideoGuide(null)}
-              className="absolute top-4 right-4 text-slate-500 hover:text-slate-800 transition-colors p-1 bg-slate-100 hover:bg-slate-200 rounded-full"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 text-slate-500 hover:text-slate-800 transition-colors p-1 bg-slate-100 hover:bg-slate-200 rounded-full z-10"
             >
-              <Plus className="w-6 h-6 rotate-45" />
+              <Plus className="w-5 h-5 sm:w-6 sm:h-6 rotate-45" />
             </button>
-            <h3 className="text-base font-black text-slate-800 uppercase tracking-wider border-b pb-3">
+            <h3 className="text-xs sm:text-base font-black text-slate-800 uppercase tracking-wider border-b pb-3 pr-10">
               {activeVideoGuide === "login"
                 ? "Account Login/Creation & Recharge Guide / लॉगिन और रिचार्ज वीडियो गाइड"
                 : "Farmer ID Card Creation Guide / कार्ड बनाने की वीडियो गाइड"}
@@ -1047,7 +1047,7 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
               <button
                 type="button"
                 onClick={() => setActiveVideoGuide(null)}
-                className="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-black rounded-xl uppercase tracking-wider transition-all"
+                className="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-[10px] sm:text-xs font-black rounded-xl uppercase tracking-wider transition-all cursor-pointer"
               >
                 Close / बंद करें
               </button>
