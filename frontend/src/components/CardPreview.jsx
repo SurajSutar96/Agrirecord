@@ -69,6 +69,48 @@ const STATE_THEMES = [
 export default function CardPreview({ data, forceFullScale = false, previewRef, isDraft = false }) {
   const containerRef = useRef(null);
   const [scale, setScale] = useState(1);
+  const [isTampered, setIsTampered] = useState(false);
+
+  // DOM Tampering Guard
+  useEffect(() => {
+    if (!isDraft) return;
+
+    const target = containerRef.current;
+    if (!target) return;
+
+    const observer = new MutationObserver((mutations) => {
+      let watermarkCount = target.querySelectorAll(".draft-watermark-wrapper").length;
+      // Expect 2 draft watermark blocks (one on Front, one on Back)
+      if (watermarkCount < 2) {
+        setIsTampered(true);
+        return;
+      }
+
+      for (const mutation of mutations) {
+        // If someone modified wrapper styles (e.g. opacity, display, transform, visibility)
+        if (mutation.type === "attributes" && mutation.target.classList.contains("draft-watermark-wrapper")) {
+          const style = window.getComputedStyle(mutation.target);
+          if (
+            style.display === "none" ||
+            style.visibility === "hidden" ||
+            parseFloat(style.opacity) < 0.01
+          ) {
+            setIsTampered(true);
+            return;
+          }
+        }
+      }
+    });
+
+    observer.observe(target, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["style", "class"]
+    });
+
+    return () => observer.disconnect();
+  }, [isDraft]);
 
   // Find theme of selected state
   const stateTheme = STATE_THEMES.find((theme) => theme.name === data.state) || STATE_THEMES[0];
@@ -230,6 +272,33 @@ export default function CardPreview({ data, forceFullScale = false, previewRef, 
 
   const gridGapClass = 
     (hindiNameLength > 10 || englishNameLength > 14) ? "grid grid-cols-2 gap-x-4 gap-y-3" : "grid grid-cols-2 gap-x-4 gap-y-4";
+
+  if (isTampered) {
+    return (
+      <div ref={containerRef} className="w-full flex flex-col items-center card-preview-container select-none">
+        <div 
+          className="bg-red-50 border-2 border-red-200 rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-lg"
+          style={{
+            width: "600px",
+            height: "380px",
+            transform: `scale(${activeScale})`,
+            transformOrigin: "top center",
+            marginBottom: `${-380 * (1 - activeScale)}px`
+          }}
+        >
+          <div className="p-3.5 bg-red-100 text-red-650 rounded-2xl mb-3.5 animate-pulse">
+            <Shield className="w-10 h-10 text-red-650" />
+          </div>
+          <h4 className="text-base font-black text-slate-800 uppercase tracking-wider">
+            Tamper Guard Activated / छेड़छाड़ सुरक्षा सक्रिय
+          </h4>
+          <p className="text-xs font-semibold text-slate-500 max-w-sm mt-2 leading-relaxed">
+            Manual DOM modification (Inspect Element) detected. Card preview is temporarily locked. Please refresh the page to restart.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} className="w-full flex flex-col items-center card-preview-container">
@@ -409,16 +478,23 @@ export default function CardPreview({ data, forceFullScale = false, previewRef, 
           </div>
 
           {isDraft && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[100] select-none overflow-hidden">
-              <div 
-                className="font-black text-[108px] uppercase tracking-[0.1em] select-none pointer-events-none whitespace-nowrap rotate-[-30deg]"
-                style={{
-                  color: "rgba(220, 38, 38, 0.70)",
-                  textShadow: "2px 2px 0 rgba(255, 255, 255, 0.65)"
-                }}
-              >
-                AgriRecord Draft
-              </div>
+            <div className="draft-watermark-wrapper absolute inset-0 flex flex-col justify-between p-6 pointer-events-none z-[100] select-none overflow-hidden bg-red-600/[0.02]">
+              {[...Array(4)].map((_, r) => (
+                <div key={r} className="flex justify-between gap-4 rotate-[-25deg] translate-y-1">
+                  {[...Array(3)].map((_, c) => (
+                    <span 
+                      key={c}
+                      className="font-black text-[19px] uppercase tracking-wider select-none pointer-events-none whitespace-nowrap"
+                      style={{
+                        color: "rgba(220, 38, 38, 0.60)",
+                        textShadow: "1px 1px 0 rgba(255, 255, 255, 0.75)"
+                      }}
+                    >
+                      AgriRecord Draft
+                    </span>
+                  ))}
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -519,16 +595,23 @@ export default function CardPreview({ data, forceFullScale = false, previewRef, 
           </div>
 
           {isDraft && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[100] select-none overflow-hidden">
-              <div 
-                className="font-black text-[108px] uppercase tracking-[0.1em] select-none pointer-events-none whitespace-nowrap rotate-[-30deg]"
-                style={{
-                  color: "rgba(220, 38, 38, 0.70)",
-                  textShadow: "2px 2px 0 rgba(255, 255, 255, 0.65)"
-                }}
-              >
-                AgriRecord Draft
-              </div>
+            <div className="draft-watermark-wrapper absolute inset-0 flex flex-col justify-between p-6 pointer-events-none z-[100] select-none overflow-hidden bg-red-600/[0.02]">
+              {[...Array(4)].map((_, r) => (
+                <div key={r} className="flex justify-between gap-4 rotate-[-25deg] translate-y-1">
+                  {[...Array(3)].map((_, c) => (
+                    <span 
+                      key={c}
+                      className="font-black text-[19px] uppercase tracking-wider select-none pointer-events-none whitespace-nowrap"
+                      style={{
+                        color: "rgba(220, 38, 38, 0.60)",
+                        textShadow: "1px 1px 0 rgba(255, 255, 255, 0.75)"
+                      }}
+                    >
+                      AgriRecord Draft
+                    </span>
+                  ))}
+                </div>
+              ))}
             </div>
           )}
         </div>

@@ -73,7 +73,9 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
   // Form is locked ONLY when user is not logged in
   const isFormLocked = !user;
 
-  // Generate random Farmer ID on mount or state change
+  const [isWindowBlurred, setIsWindowBlurred] = useState(false);
+
+  // Generate random Farmer ID on mount or state change and listen to focus/blur
   useEffect(() => {
     try {
       localStorage.removeItem("agri_form_draft");
@@ -82,6 +84,12 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
     if (!formData.farmerId) {
       generateRandomFarmerId();
     }
+
+    const handleBlur = () => setIsWindowBlurred(true);
+    const handleFocus = () => setIsWindowBlurred(false);
+
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
 
     // Scroll to video guide if hash is set
     if (window.location.hash === "#video-guides") {
@@ -92,6 +100,11 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
         }
       }, 100);
     }
+
+    return () => {
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleFocus);
+    };
   }, []);
 
   const generateRandomFarmerId = () => {
@@ -904,7 +917,18 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
             </div>
             
             {/* Live rendering */}
-            <CardPreview data={formData} previewRef={previewRef} isDraft={true} />
+            <div className="relative w-full overflow-hidden flex justify-center rounded-3xl" onClick={() => setIsWindowBlurred(false)}>
+              <CardPreview data={formData} previewRef={previewRef} isDraft={true} />
+              {isWindowBlurred && (
+                <div className="absolute inset-0 z-50 bg-slate-900/90 backdrop-blur-md flex flex-col items-center justify-center text-white text-center p-4 rounded-3xl cursor-pointer select-none">
+                  <Lock className="w-10 h-10 text-[#cddc39] animate-bounce mb-3" />
+                  <p className="text-xs font-black uppercase tracking-wider">Screen Protected</p>
+                  <p className="text-[10px] font-bold text-slate-400 mt-1">
+                    {lang === "mr" ? "सक्रिय करण्यासाठी येथे क्लिक करा" : lang === "hi" ? "सक्रिय करने के लिए यहां क्लिक करें" : "Click here to reactivate preview"}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Document Operations Controls Panel */}
