@@ -44,8 +44,8 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
   const previewRef = useRef(null);
   const pdfRef = useRef(null);
   
-  // Default form values
-  const DEFAULT_FORM = {
+  // Basic Info Form State
+  const [formData, setFormData] = useState({
     nameHindi: "आदित्य जगताप",
     nameEnglish: "ADITYA JAGTAP",
     dob: "15/08/1990",
@@ -61,18 +61,6 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
     landDetails: [
       { id: "1", district: "Pune", subDistrict: "Daund", village: "Varvand", mOwnerNo: "452", khasra: "1256", area: "0.45 Hec" }
     ]
-  };
-
-  // Basic Info Form State — restore draft from localStorage if available
-  const [formData, setFormData] = useState(() => {
-    try {
-      const saved = localStorage.getItem("agri_form_draft");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return { ...DEFAULT_FORM, ...parsed, photoUrl: "" }; // never restore photo from storage
-      }
-    } catch (e) { /* ignore parse errors */ }
-    return DEFAULT_FORM;
   });
 
   const [loading, setLoading] = useState(false);
@@ -87,6 +75,10 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
 
   // Generate random Farmer ID on mount or state change
   useEffect(() => {
+    try {
+      localStorage.removeItem("agri_form_draft");
+    } catch (e) {}
+
     if (!formData.farmerId) {
       generateRandomFarmerId();
     }
@@ -101,14 +93,6 @@ export default function MainGenerator({ user, onAuthSuccess, onUpdateCredits, on
       }, 100);
     }
   }, []);
-
-  // Auto-save form draft to localStorage on every change (exclude photoUrl to keep storage small)
-  useEffect(() => {
-    try {
-      const { photoUrl, ...draftWithoutPhoto } = formData;
-      localStorage.setItem("agri_form_draft", JSON.stringify(draftWithoutPhoto));
-    } catch (e) { /* ignore storage errors */ }
-  }, [formData]);
 
   const generateRandomFarmerId = () => {
     // ID format: XXX-XX-XXXX-XXX or similar (e.g. 123-45-6789-012)
