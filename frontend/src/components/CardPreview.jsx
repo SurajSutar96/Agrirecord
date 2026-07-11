@@ -411,19 +411,10 @@ export default function CardPreview({ data, forceFullScale = false, previewRef, 
           {isDraft && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[100] select-none overflow-hidden">
               <div 
-                className="absolute font-black text-8xl uppercase tracking-[0.1em] select-none pointer-events-none whitespace-nowrap rotate-[-30deg]"
+                className="font-black text-[108px] uppercase tracking-[0.1em] select-none pointer-events-none whitespace-nowrap rotate-[-30deg]"
                 style={{
-                  color: "rgba(220, 38, 38, 0.55)",
-                  textShadow: "2px 2px 0 rgba(255, 255, 255, 0.6)"
-                }}
-              >
-                AgriRecord Draft
-              </div>
-              <div 
-                className="absolute font-black text-8xl uppercase tracking-[0.1em] select-none pointer-events-none whitespace-nowrap rotate-[30deg]"
-                style={{
-                  color: "rgba(220, 38, 38, 0.55)",
-                  textShadow: "2px 2px 0 rgba(255, 255, 255, 0.6)"
+                  color: "rgba(220, 38, 38, 0.70)",
+                  textShadow: "2px 2px 0 rgba(255, 255, 255, 0.65)"
                 }}
               >
                 AgriRecord Draft
@@ -530,19 +521,10 @@ export default function CardPreview({ data, forceFullScale = false, previewRef, 
           {isDraft && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[100] select-none overflow-hidden">
               <div 
-                className="absolute font-black text-8xl uppercase tracking-[0.1em] select-none pointer-events-none whitespace-nowrap rotate-[-30deg]"
+                className="font-black text-[108px] uppercase tracking-[0.1em] select-none pointer-events-none whitespace-nowrap rotate-[-30deg]"
                 style={{
-                  color: "rgba(220, 38, 38, 0.55)",
-                  textShadow: "2px 2px 0 rgba(255, 255, 255, 0.6)"
-                }}
-              >
-                AgriRecord Draft
-              </div>
-              <div 
-                className="absolute font-black text-8xl uppercase tracking-[0.1em] select-none pointer-events-none whitespace-nowrap rotate-[30deg]"
-                style={{
-                  color: "rgba(220, 38, 38, 0.55)",
-                  textShadow: "2px 2px 0 rgba(255, 255, 255, 0.6)"
+                  color: "rgba(220, 38, 38, 0.70)",
+                  textShadow: "2px 2px 0 rgba(255, 255, 255, 0.65)"
                 }}
               >
                 AgriRecord Draft
