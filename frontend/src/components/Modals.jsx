@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { CircleX, Mail, Key, Phone, User, Landmark, HelpCircle, CheckCircle, CreditCard, Lock, Check, Wallet, Loader2, ShieldAlert } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { CircleX, Mail, Key, Phone, User, Landmark, HelpCircle, CheckCircle, CreditCard, Lock, Check, Wallet, Loader2, ShieldAlert, MessageSquare, MessageCircle } from "lucide-react";
 import { auth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "../firebase";
 
 
@@ -950,3 +950,289 @@ export const ProfileModal = ({ isOpen, onClose, user, onUpdateUser }) => {
     </Modal>
   );
 };
+
+export const FeedbackModal = ({ isOpen, onClose, user }) => {
+  const [activeTab, setActiveTab] = useState("whatsapp"); // "whatsapp" | "feedback" | "history"
+  const [category, setCategory] = useState("General Feedback");
+  const [content, setContent] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [myFeedbacks, setMyFeedbacks] = useState([]);
+  const [fetching, setFetching] = useState(false);
+
+  const fetchMyFeedbacks = async () => {
+    if (!user) return;
+    setFetching(true);
+    const token = localStorage.getItem("agri_record_token");
+    try {
+      const response = await fetch("/api/feedback/my", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setMyFeedbacks(data || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch my feedbacks:", err);
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchMyFeedbacks();
+    }
+  }, [isOpen]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!content.trim()) return;
+
+    setLoading(true);
+    const token = localStorage.getItem("agri_record_token");
+    try {
+      const response = await fetch("/api/feedback", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          category,
+          content,
+          email: user?.email || "anonymous@agrirecord.com",
+          name: user?.name || "Anonymous User",
+          mobile: user?.mobile || "N/A"
+        })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        window.showToast("Feedback submitted successfully! Thank you.", "success");
+        setContent("");
+        fetchMyFeedbacks();
+        setActiveTab("history"); // automatically switch to history tab so they see it pending!
+      } else {
+        window.showToast(data.detail || "Failed to submit feedback", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      window.showToast("Failed to submit feedback", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDismiss = async (feedbackId) => {
+    const token = localStorage.getItem("agri_record_token");
+    try {
+      const response = await fetch(`/api/feedback/${feedbackId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        window.showToast("Feedback notification cleared!", "success");
+        setMyFeedbacks(prev => prev.filter(f => f.id !== feedbackId));
+      } else {
+        const data = await response.json();
+        window.showToast(data.detail || "Failed to clear feedback", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      window.showToast("Failed to clear feedback", "error");
+    }
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="text-center sm:text-left space-y-1">
+          <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-tight">
+            Help & Support Center
+          </h2>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none">
+            मदत आणि संपर्क केंद्र
+          </p>
+        </div>
+
+        {/* Custom Tab Switcher */}
+        <div className="flex border-b border-slate-100 gap-1 select-none flex-wrap">
+          <button
+            onClick={() => setActiveTab("whatsapp")}
+            className={`pb-2.5 px-4 text-xs font-black uppercase tracking-wider transition-all border-b-2 cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "whatsapp"
+                ? "border-emerald-800 text-emerald-800"
+                : "border-transparent text-slate-400 hover:text-slate-600"
+            }`}
+          >
+            <MessageCircle className="w-4 h-4" /> Live Support
+          </button>
+          <button
+            onClick={() => setActiveTab("feedback")}
+            className={`pb-2.5 px-4 text-xs font-black uppercase tracking-wider transition-all border-b-2 cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "feedback"
+                ? "border-emerald-800 text-emerald-800"
+                : "border-transparent text-slate-400 hover:text-slate-600"
+            }`}
+          >
+            <MessageSquare className="w-4 h-4" /> Feedback
+          </button>
+          <button
+            onClick={() => setActiveTab("history")}
+            className={`pb-2.5 px-4 text-xs font-black uppercase tracking-wider transition-all border-b-2 cursor-pointer flex items-center gap-1.5 relative ${
+              activeTab === "history"
+                ? "border-emerald-800 text-emerald-800"
+                : "border-transparent text-slate-400 hover:text-slate-600"
+            }`}
+          >
+            History
+            {myFeedbacks.length > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 bg-emerald-100 text-emerald-950 text-[9px] font-black rounded-full leading-none">
+                {myFeedbacks.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Tab Contents */}
+        {activeTab === "whatsapp" ? (
+          <div className="space-y-5 animate-in fade-in duration-200">
+            <div className="bg-slate-50 border border-slate-100 rounded-3xl p-5 text-center space-y-4">
+              <div className="mx-auto w-12 h-12 rounded-2xl bg-[#25D366]/10 flex items-center justify-center text-[#25D366]">
+                <svg className="w-7 h-7 fill-current" viewBox="0 0 24 24">
+                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.488 1.459 5.416 1.46 5.561 0 10.088-4.526 10.091-10.087.001-2.693-1.045-5.225-2.946-7.128C17.3 1.503 14.77 1.459 12.008 1.459c-5.564 0-10.09 4.526-10.094 10.088-.002 1.902.501 3.762 1.458 5.378L1.879 21.62l4.768-1.258L6.647 19.16z"/>
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004"/>
+                </svg>
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider">
+                  Direct WhatsApp Support
+                </h4>
+                <p className="text-xs text-slate-500 font-bold leading-relaxed max-w-sm mx-auto">
+                  For instant help with billing, credit recharge, or technical difficulties, chat directly with us on WhatsApp.
+                </p>
+              </div>
+              <a
+                href={`https://wa.me/917057107982?text=${encodeURIComponent(
+                  `Hi Aditya, I need support / assistance on AgriRecordPro. Registered details - Name: ${user?.name || 'Farmer'}, Mobile: ${user?.mobile || 'N/A'}.`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-black rounded-2xl uppercase tracking-wider shadow-md transition-all hover:scale-102 cursor-pointer w-full"
+              >
+                <MessageCircle className="w-4 h-4 fill-white" /> Start WhatsApp Chat
+              </a>
+            </div>
+          </div>
+        ) : activeTab === "feedback" ? (
+          <form onSubmit={handleSubmit} className="space-y-4 animate-in fade-in duration-200">
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
+                Category / श्रेणी
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-sm font-bold text-slate-700 bg-white"
+              >
+                <option value="General Feedback">General Feedback / सामान्य प्रतिक्रिया</option>
+                <option value="Payment/Wallet Issue">Payment/Wallet Issue / पेमेंट समस्या</option>
+                <option value="Feature Suggestion">Feature Suggestion / नवीन वैशिष्ट्ये सूचना</option>
+                <option value="Bug Report">Bug Report / तांत्रिक त्रुटी अहवाल</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
+                Your Message / तुमचा संदेश
+              </label>
+              <textarea
+                required
+                rows={4}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Type your message, query, or suggestion here..."
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-sm font-bold text-slate-700 resize-none"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-[#064e3b] hover:bg-[#085a44] text-white text-sm font-black rounded-xl uppercase tracking-wider transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              Submit Feedback / पाठवा
+            </button>
+          </form>
+        ) : (
+          <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1 animate-in fade-in duration-200">
+            {fetching ? (
+              <div className="flex justify-center items-center py-8 text-slate-400">
+                <Loader2 className="w-6 h-6 animate-spin text-emerald-800" />
+              </div>
+            ) : myFeedbacks.length > 0 ? (
+              <div className="space-y-3">
+                {myFeedbacks.map((item) => (
+                  <div key={item.id} className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50 space-y-3">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="space-y-1">
+                        <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider ${
+                          item.status === "RESOLVED"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-amber-100 text-amber-800"
+                        }`}>
+                          {item.status}
+                        </span>
+                        <div className="text-[10px] text-slate-400 font-mono mt-1">{item.timestamp}</div>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">
+                        {item.category}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-600 font-semibold leading-relaxed">
+                      {item.content}
+                    </p>
+
+                    {item.admin_reply && (
+                      <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl space-y-1">
+                        <span className="text-[9px] font-black text-emerald-800 uppercase tracking-widest block">
+                          Response from Admin:
+                        </span>
+                        <p className="text-xs text-emerald-950 font-bold leading-relaxed">
+                          {item.admin_reply}
+                        </p>
+                      </div>
+                    )}
+
+                    {item.status === "RESOLVED" && (
+                      <div className="flex justify-end pt-1">
+                        <button
+                          onClick={() => handleDismiss(item.id)}
+                          className="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-[9px] font-black uppercase tracking-wider cursor-pointer transition-colors"
+                        >
+                          Clear / Dismiss
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-slate-400 font-semibold text-xs leading-relaxed">
+                No active tickets or feedback history found.
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+};
+
+

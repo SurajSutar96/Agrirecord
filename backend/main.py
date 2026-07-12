@@ -84,19 +84,26 @@ def get_token(token: Optional[str] = None, authorization: Optional[str] = Header
     raise HTTPException(status_code=401, detail="Authentication token missing")
 
 def ensure_datetime(val) -> datetime.datetime:
+    res = None
     if isinstance(val, datetime.datetime):
-        return val
-    if isinstance(val, str):
+        res = val
+    elif isinstance(val, str):
         try:
-            return datetime.datetime.fromisoformat(val)
+            res = datetime.datetime.fromisoformat(val)
         except Exception:
             pass
-    if val is not None:
+    elif val is not None:
         try:
-            return val.to_datetime()
+            res = val.to_datetime()
         except Exception:
             pass
-    return datetime.datetime.utcnow()
+            
+    if res is None:
+        return datetime.datetime.utcnow()
+        
+    if res.tzinfo is not None:
+        res = res.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+    return res
 
 def get_global_settings():
     doc_ref = db.collection("settings").document("global")
@@ -818,6 +825,18 @@ def get_admin_stats(token: str = Depends(get_token)):
     cards_chart_data = [{"date": k, "count": daily_cards[k]} for k in sorted(daily_cards.keys())]
     users_chart_data = [{"date": k, "count": daily_users[k]} for k in sorted(daily_users.keys())]
         
+    total_logs = 0
+    try:
+        total_logs = db.collection("admin_logs").count().get()[0][0].value
+    except Exception:
+        total_logs = len(list(db.collection("admin_logs").stream()))
+
+    total_feedback = 0
+    try:
+        total_feedback = db.collection("feedback").count().get()[0][0].value
+    except Exception:
+        total_feedback = len(list(db.collection("feedback").stream()))
+        
     return {
         "totalUsers": total_users,
         "totalCards": total_cards,
@@ -826,7 +845,9 @@ def get_admin_stats(token: str = Depends(get_token)):
         "recentOrders": orders_list,
         "revenueChartData": revenue_chart_data,
         "cardsChartData": cards_chart_data,
-        "usersChartData": users_chart_data
+        "usersChartData": users_chart_data,
+        "totalLogs": total_logs,
+        "totalFeedback": total_feedback
     }
 
 @app.delete("/api/admin/cards/{card_id}")
@@ -907,6 +928,112 @@ def get_admin_logs(token: str = Depends(get_token), page: int = 1, limit: int = 
     total_items = len(logs)
     sliced_logs = logs[(page - 1) * limit : page * limit]
     return {"items": sliced_logs, "total": total_items}
+
+@app.post("/api/feedback")
+def submit_feedback(payload: schemas.FeedbackCreate, token: str = Depends(get_token)):
+    uid = get_current_user_id(token)
+    db.collection("feedback").add({
+        "user_id": uid,
+        "category": payload.category,
+        "content": payload.content,
+        "email": payload.email,
+        "name": payload.name,
+        "mobile": payload.mobile,
+        "status": "PENDING",
+        "admin_reply": None,
+        "timestamp": datetime.datetime.utcnow()
+    })
+    return {"status": "success", "message": "Feedback submitted successfully"}
+
+@app.get("/api/feedback/my")
+def get_my_feedback(token: str = Depends(get_token)):
+    uid = get_current_user_id(token)
+    feedback_ref = db.collection("feedback").where("user_id", "==", uid).stream()
+    items = []
+    now = datetime.datetime.utcnow()
+    for doc in feedback_ref:
+        d = doc.to_dict()
+        d["id"] = doc.id
+        
+        # 12-hour auto-delete resolved check
+        if d.get("status") == "RESOLVED" and "resolved_at" in d:
+            resolved_at = ensure_datetime(d["resolved_at"])
+            if now - resolved_at > datetime.timedelta(hours=12):
+                db.collection("feedback").document(doc.id).delete()
+                continue
+                
+        if "timestamp" in d:
+            d["timestamp"] = ensure_datetime(d["timestamp"]).strftime("%Y-%m-%d %H:%M:%S")
+        items.append(d)
+    
+    # Sort locally by timestamp descending
+    items.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+    return items
+
+@app.delete("/api/feedback/{feedback_id}")
+def delete_user_feedback(feedback_id: str, token: str = Depends(get_token)):
+    uid = get_current_user_id(token)
+    doc_ref = db.collection("feedback").document(feedback_id)
+    doc = doc_ref.get()
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail="Feedback not found")
+    
+    data = doc.to_dict()
+    if data.get("user_id") != uid:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this feedback")
+    
+    doc_ref.delete()
+    return {"status": "success", "message": "Feedback deleted successfully"}
+
+@app.get("/api/admin/feedback")
+def get_admin_feedback(token: str = Depends(get_token), page: int = 1, limit: int = 10):
+    check_admin(token)
+    feedback_ref = db.collection("feedback").stream()
+    items = []
+    now = datetime.datetime.utcnow()
+    for doc in feedback_ref:
+        d = doc.to_dict()
+        d["id"] = doc.id
+        
+        # 12-hour auto-delete resolved check
+        if d.get("status") == "RESOLVED" and "resolved_at" in d:
+            resolved_at = ensure_datetime(d["resolved_at"])
+            if now - resolved_at > datetime.timedelta(hours=12):
+                db.collection("feedback").document(doc.id).delete()
+                continue
+                
+        if "timestamp" in d:
+            d["timestamp"] = ensure_datetime(d["timestamp"]).strftime("%Y-%m-%d %H:%M:%S")
+        items.append(d)
+        
+    # Sort locally by timestamp descending
+    items.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+    
+    total = len(items)
+    sliced = items[(page - 1) * limit : page * limit]
+    return {"items": sliced, "total": total}
+
+@app.post("/api/admin/feedback/{feedback_id}/resolve")
+def resolve_admin_feedback(feedback_id: str, payload: schemas.FeedbackResolveRequest, token: str = Depends(get_token)):
+    check_admin(token)
+    doc_ref = db.collection("feedback").document(feedback_id)
+    if not doc_ref.get().exists:
+        raise HTTPException(status_code=404, detail="Feedback document not found")
+        
+    doc_ref.update({
+        "status": "RESOLVED",
+        "admin_reply": payload.reply,
+        "resolved_at": datetime.datetime.utcnow()
+    })
+    log_admin_action(token, "RESOLVE_FEEDBACK", f"Resolved and replied to feedback document ID: {feedback_id}")
+    return {"status": "success", "message": "Feedback marked as resolved"}
+
+@app.delete("/api/admin/feedback/{feedback_id}")
+def delete_admin_feedback(feedback_id: str, token: str = Depends(get_token)):
+    check_admin(token)
+    db.collection("feedback").document(feedback_id).delete()
+    log_admin_action(token, "DELETE_FEEDBACK", f"Deleted feedback document with ID: {feedback_id}")
+    return {"status": "success", "message": "Feedback deleted successfully"}
 
 @app.get("/api/settings")
 def get_public_settings():

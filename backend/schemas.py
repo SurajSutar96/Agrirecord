@@ -113,4 +113,16 @@ class GlobalSettingsUpdate(BaseModel):
     support_message: str
 
 
+class FeedbackCreate(BaseModel):
+    category: str
+    content: str
+    email: str
+    name: str
+    mobile: str
+
+
+class FeedbackResolveRequest(BaseModel):
+    reply: str
+
+
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { 
   Users, CreditCard, Shield, Landmark, Loader2, Save, Trash2, Mail, Key,
-  IndianRupee, Percent, Activity, Search, UserMinus, Plus
+  IndianRupee, Percent, Activity, Search, UserMinus, Plus, Eye
 } from "lucide-react";
 import { auth, googleProvider, signInWithPopup } from "../firebase";
 
@@ -18,13 +18,20 @@ export default function AdminPanel({ user, onAuthSuccess }) {
   const [usersPage, setUsersPage] = useState(1);
   const [cardsPage, setCardsPage] = useState(1);
   const [logsPage, setLogsPage] = useState(1);
+  const [feedbackPage, setFeedbackPage] = useState(1);
 
   const [usersTotal, setUsersTotal] = useState(0);
   const [cardsTotal, setCardsTotal] = useState(0);
   const [txTotal, setTxTotal] = useState(0);
   const [logsTotal, setLogsTotal] = useState(0);
+  const [feedbackTotal, setFeedbackTotal] = useState(0);
   const [transactions, setTransactions] = useState([]);
   const [adminLogs, setAdminLogs] = useState([]);
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [viewingFeedback, setViewingFeedback] = useState(null);
+  const [replyModalFeedback, setReplyModalFeedback] = useState(null);
+  const [adminReplyText, setAdminReplyText] = useState("");
+  const [deleteModalFeedbackId, setDeleteModalFeedbackId] = useState(null);
   const [globalSettings, setGlobalSettings] = useState({
     credit_price: 15.0,
     pkg_basic_price: 150.0,
@@ -42,6 +49,7 @@ export default function AdminPanel({ user, onAuthSuccess }) {
     setUsersPage(1);
     setCardsPage(1);
     setLogsPage(1);
+    setFeedbackPage(1);
   }, [tab, searchTerm, txStatusFilter]);
 
   const [stats, setStats] = useState({
@@ -105,6 +113,8 @@ export default function AdminPanel({ user, onAuthSuccess }) {
         const data = await response.json();
         if (response.ok) {
           setStats(data);
+          setLogsTotal(data.totalLogs || 0);
+          setFeedbackTotal(data.totalFeedback || 0);
         }
         
         const txResponse = await fetch(`/api/admin/transactions?token=${token}&page=${txPage}&limit=${itemsPerPage}&status=${txStatusFilter}`);
@@ -133,6 +143,13 @@ export default function AdminPanel({ user, onAuthSuccess }) {
         if (response.ok) {
           setAdminLogs(data.items || []);
           setLogsTotal(data.total || 0);
+        }
+      } else if (tab === "feedback") {
+        const response = await fetch(`/api/admin/feedback?token=${token}&page=${feedbackPage}&limit=${itemsPerPage}`);
+        const data = await response.json();
+        if (response.ok) {
+          setFeedbacks(data.items || []);
+          setFeedbackTotal(data.total || 0);
         }
       } else if (tab === "settings") {
         const SETTINGS_CACHE_KEY = "agri_settings_cache";
@@ -167,12 +184,28 @@ export default function AdminPanel({ user, onAuthSuccess }) {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     if (user && user.role === "Admin") {
       fetchAdminData();
     }
-  }, [user, tab, txPage, usersPage, cardsPage, logsPage, txStatusFilter, searchTerm]);
+  }, [user, tab, txPage, usersPage, cardsPage, logsPage, feedbackPage, txStatusFilter, searchTerm]);
+
+  useEffect(() => {
+    if (user && user.role === "Admin") {
+      const token = localStorage.getItem("agri_record_token");
+      fetch(`/api/admin/stats?token=${token}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data) {
+            setLogsTotal(data.totalLogs || 0);
+            setFeedbackTotal(data.totalFeedback || 0);
+            setUsersTotal(data.totalUsers || 0);
+            setCardsTotal(data.totalCards || 0);
+          }
+        })
+        .catch(err => console.error("Initial totals fetch failed:", err));
+    }
+  }, [user]);
 
   const handleUpdateCredits = async (userId) => {
     const token = localStorage.getItem("agri_record_token");
@@ -394,6 +427,69 @@ export default function AdminPanel({ user, onAuthSuccess }) {
     }
   };
 
+  const handleDeleteFeedback = (feedbackId) => {
+    setDeleteModalFeedbackId(feedbackId);
+  };
+
+  const executeDeleteFeedback = async (feedbackId) => {
+    const token = localStorage.getItem("agri_record_token");
+    try {
+      const response = await fetch(`/api/admin/feedback/${feedbackId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        window.showToast("Feedback permanently deleted!", "success");
+        setDeleteModalFeedbackId(null);
+        fetchAdminData();
+      } else {
+        const data = await response.json();
+        window.showToast(data.detail || "Failed to delete feedback", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      window.showToast("Failed to delete feedback", "error");
+    }
+  };
+
+  const handleResolveFeedback = (feedback) => {
+    setReplyModalFeedback(feedback);
+    setAdminReplyText("");
+  };
+
+  const executeResolveFeedback = async (feedbackId, reply) => {
+    if (!reply.trim()) {
+      window.showToast("Reply message cannot be empty!", "warning");
+      return;
+    }
+
+    const token = localStorage.getItem("agri_record_token");
+    try {
+      const response = await fetch(`/api/admin/feedback/${feedbackId}/resolve`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ reply })
+      });
+      if (response.ok) {
+        window.showToast("Feedback resolved and reply sent to user!", "success");
+        setReplyModalFeedback(null);
+        setAdminReplyText("");
+        fetchAdminData();
+      } else {
+        const data = await response.json();
+        window.showToast(data.detail || "Failed to resolve feedback", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      window.showToast("Failed to resolve feedback", "error");
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 no-print transition-all duration-300">
       {/* Header Title section */}
@@ -443,6 +539,14 @@ export default function AdminPanel({ user, onAuthSuccess }) {
           }`}
         >
           <Shield className="w-4 h-4" /> Activity Logs ({logsTotal})
+        </button>
+        <button
+          onClick={() => { setTab("feedback"); setSearchTerm(""); }}
+          className={`pb-3 px-5 text-xs font-black uppercase tracking-widest transition-colors border-b-3 flex items-center gap-2 cursor-pointer ${
+            tab === "feedback" ? "border-emerald-800 text-emerald-800" : "border-transparent text-slate-400 hover:text-slate-600"
+          }`}
+        >
+          <Mail className="w-4 h-4" /> User Feedbacks ({feedbackTotal})
         </button>
         <button
           onClick={() => { setTab("settings"); setSearchTerm(""); }}
@@ -987,6 +1091,127 @@ export default function AdminPanel({ user, onAuthSuccess }) {
             />
           </div>
         </div>
+      ) : tab === "feedback" ? (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          <div className="flex justify-between items-center bg-white border border-slate-200 rounded-2xl px-6 py-4 shadow-xs">
+            <div>
+              <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">User Feedbacks & Suggestions</h3>
+              <p className="text-xs font-semibold text-slate-400 mt-0.5">Incoming feedback, bug reports, and features suggested by users. Resolving a feedback deletes it from Firestore.</p>
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center gap-4 bg-white border border-slate-200 rounded-2xl px-6 py-3 shadow-xs flex-wrap select-none">
+            <div className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+              Feedback List
+            </div>
+            <div className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+              Total Feedback: {feedbackTotal}
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-xs font-black uppercase text-slate-500 tracking-wider">
+                    <th className="px-6 py-4">Submitted At</th>
+                    <th className="px-6 py-4">User Details</th>
+                    <th className="px-6 py-4">Category</th>
+                    <th className="px-6 py-4">Feedback Content</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
+                  {feedbacks.length > 0 ? (
+                    feedbacks.map((item) => (
+                      <tr key={item.id} className="hover:bg-slate-50/50">
+                        <td className="px-6 py-4 text-slate-400 font-mono">{item.timestamp}</td>
+                        <td className="px-6 py-4">
+                          <div className="font-extrabold text-slate-800">{item.name}</div>
+                          <div className="text-[10px] text-slate-400 font-semibold">{item.email} • {item.mobile}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col items-start gap-1 select-none">
+                            <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider block w-max ${
+                              item.category === "Payment/Wallet Issue"
+                                ? "bg-red-50 text-red-800 border border-red-100"
+                                : item.category === "Bug Report"
+                                ? "bg-amber-50 text-amber-800 border border-amber-100"
+                                : item.category === "Feature Suggestion"
+                                ? "bg-blue-50 text-blue-800 border border-blue-100"
+                                : "bg-slate-50 text-slate-800 border border-slate-100"
+                            }`}>
+                              {item.category}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-wider block w-max ${
+                              item.status === "RESOLVED"
+                                ? "bg-emerald-150 text-emerald-900 border border-emerald-250/20"
+                                : "bg-amber-100/80 text-amber-900 border border-amber-200"
+                            }`}>
+                              {item.status || "PENDING"}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 max-w-xs md:max-w-md leading-relaxed space-y-2">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <div className="text-slate-600 font-semibold truncate max-w-[150px] sm:max-w-[280px]">
+                              {item.content}
+                            </div>
+                            <button
+                              onClick={() => setViewingFeedback(item)}
+                              className="p-1 hover:bg-slate-100 hover:text-emerald-800 text-slate-400 rounded-lg transition-colors cursor-pointer flex items-center justify-center"
+                              title="Click to view full message"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          {item.admin_reply && (
+                            <div className="text-[10.5px] text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-xl border border-emerald-100 font-bold max-w-xs leading-relaxed animate-in fade-in duration-200">
+                              <span className="font-black uppercase tracking-wider text-[8px] block text-emerald-700">Admin Response:</span>
+                              {item.admin_reply}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2 justify-end">
+                            {item.status !== "RESOLVED" && (
+                              <button
+                                onClick={() => handleResolveFeedback(item)}
+                                className="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-950 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                              >
+                                Reply & Resolve
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDeleteFeedback(item.id)}
+                              className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-xs"
+                              title="Permanently delete from database"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5" className="text-center py-8 text-slate-400 font-semibold">
+                        No user feedback recorded.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <Pagination
+              currentPage={feedbackPage}
+              totalItems={feedbackTotal}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setFeedbackPage}
+            />
+          </div>
+        </div>
       ) : (
         <div className="space-y-6 animate-in fade-in duration-300 max-w-3xl">
           <div className="bg-white border border-slate-200 rounded-2xl px-6 py-4 shadow-xs">
@@ -1110,6 +1335,181 @@ export default function AdminPanel({ user, onAuthSuccess }) {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Feedback Detail Modal */}
+      {viewingFeedback && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-[9999] overflow-y-auto">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-2xl w-full relative animate-in fade-in zoom-in duration-200 shadow-2xl">
+            <button
+              onClick={() => setViewingFeedback(null)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors p-1 bg-slate-100 hover:bg-slate-200 rounded-full"
+            >
+              <Plus className="w-6 h-6 rotate-45" />
+            </button>
+            
+            <div className="space-y-6">
+              <div className="border-b pb-4">
+                <span className={`px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider ${
+                  viewingFeedback.status === "RESOLVED"
+                    ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                    : "bg-amber-100 text-amber-800 border border-amber-200"
+                }`}>
+                  {viewingFeedback.status || "PENDING"}
+                </span>
+                <h3 className="text-lg font-black text-slate-800 uppercase tracking-wider mt-2">
+                  Feedback Ticket Details
+                </h3>
+                <p className="text-[10px] text-slate-400 font-bold mt-0.5">
+                  Submitted at: {viewingFeedback.timestamp}
+                </p>
+              </div>
+
+              {/* Submitter User Info */}
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 grid grid-cols-2 gap-4 text-xs font-bold">
+                <div>
+                  <span className="text-[9px] text-slate-400 uppercase tracking-wider block">Operator Name</span>
+                  <span className="text-slate-800 font-extrabold">{viewingFeedback.name}</span>
+                </div>
+                <div>
+                  <span className="text-[9px] text-slate-400 uppercase tracking-wider block">Feedback Category</span>
+                  <span className="text-slate-800 font-extrabold">{viewingFeedback.category}</span>
+                </div>
+                <div>
+                  <span className="text-[9px] text-slate-400 uppercase tracking-wider block">Mobile Number</span>
+                  <span className="text-slate-800">{viewingFeedback.mobile}</span>
+                </div>
+                <div>
+                  <span className="text-[9px] text-slate-400 uppercase tracking-wider block">Email Address</span>
+                  <span className="text-slate-800 truncate block" title={viewingFeedback.email}>{viewingFeedback.email}</span>
+                </div>
+              </div>
+
+              {/* Feedback Content Message */}
+              <div className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Feedback Message</span>
+                <div className="bg-white border border-slate-100 rounded-2xl p-4 text-xs font-semibold text-slate-700 leading-relaxed whitespace-pre-wrap max-h-40 overflow-y-auto shadow-inner">
+                  {viewingFeedback.content}
+                </div>
+              </div>
+
+              {/* Responses Block */}
+              {viewingFeedback.admin_reply ? (
+                <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl space-y-1.5 animate-in fade-in duration-200">
+                  <span className="text-[9px] font-black text-emerald-800 uppercase tracking-widest block">
+                    Your Response:
+                  </span>
+                  <p className="text-xs text-emerald-950 font-bold leading-relaxed whitespace-pre-wrap">
+                    {viewingFeedback.admin_reply}
+                  </p>
+                </div>
+              ) : (
+                <div className="flex gap-3 justify-end pt-2">
+                  <button
+                    onClick={() => {
+                      handleResolveFeedback(viewingFeedback);
+                      setViewingFeedback(null);
+                    }}
+                    className="px-4 py-2 bg-emerald-800 hover:bg-emerald-950 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md whitespace-nowrap"
+                  >
+                    Reply & Resolve
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleDeleteFeedback(viewingFeedback.id);
+                      setViewingFeedback(null);
+                    }}
+                    className="px-4 py-2 bg-red-650 hover:bg-red-800 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md"
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reply Modal */}
+      {replyModalFeedback && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-[99999] select-none animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-lg w-full relative shadow-2xl">
+            <h3 className="text-base font-black text-slate-800 uppercase tracking-wider mb-2">
+              Send Reply & Resolve Ticket
+            </h3>
+            <p className="text-xs text-slate-400 font-bold mb-4 uppercase tracking-widest leading-none">
+              To: {replyModalFeedback.name} ({replyModalFeedback.email})
+            </p>
+            
+            <div className="space-y-4">
+              <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-xs text-slate-500 font-semibold italic max-h-24 overflow-y-auto">
+                "{replyModalFeedback.content}"
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
+                  Write Admin Response / प्रतिसाद
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  value={adminReplyText}
+                  onChange={(e) => setAdminReplyText(e.target.value)}
+                  placeholder="Enter resolution message..."
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none text-xs font-bold text-slate-700 resize-none"
+                />
+              </div>
+
+              <div className="flex gap-2 justify-end pt-2">
+                <button
+                  onClick={() => setReplyModalFeedback(null)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-black uppercase tracking-wider transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => executeResolveFeedback(replyModalFeedback.id, adminReplyText)}
+                  className="px-4 py-2 bg-emerald-800 hover:bg-emerald-950 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors cursor-pointer shadow-md"
+                >
+                  Send Reply
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalFeedbackId && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-[99999] select-none animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-sm w-full relative shadow-2xl text-center space-y-4">
+            <div className="mx-auto w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-600">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">
+                Permanently Delete?
+              </h3>
+              <p className="text-xs text-slate-400 font-bold leading-relaxed max-w-xs mx-auto">
+                Are you sure you want to delete this feedback document? This action is irreversible.
+              </p>
+            </div>
+            <div className="flex gap-2 justify-center pt-2">
+              <button
+                onClick={() => setDeleteModalFeedbackId(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-black uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => executeDeleteFeedback(deleteModalFeedbackId)}
+                className="px-4 py-2 bg-red-600 hover:bg-red-750 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors cursor-pointer shadow-md"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
